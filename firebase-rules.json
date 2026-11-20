@@ -1,0 +1,53 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.child('meta/hostUid').val() === auth.uid)",
+
+        "players": { ".write": true },
+        "act": { ".write": true },
+        "votes": { ".write": true },
+        "chat": { ".write": true },
+
+        "meta": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "roles": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "alive": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "sak": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "loot": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "goal": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "lordShield": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "thiefTurns": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "history": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "results": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "voteresults": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "winner": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "scores": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" },
+        "private": { ".write": "auth != null && root.child('rooms/' + $code + '/meta/hostUid').val() === auth.uid" }
+      }
+    },
+
+    "cw": {
+      "$code": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.child('meta/hostUid').val() === auth.uid)",
+
+        "players": { ".write": "auth != null" },
+        "acts":    { ".write": "auth != null" },
+        "screen":  { "$pid": { ".write": "auth != null" } },
+        "stats":   { "$pid": { ".write": "auth != null" } }
+      }
+    },
+
+    "mh": {
+      "$code": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.child('meta/hostUid').val() === auth.uid)",
+
+        "players": { ".write": "auth != null" },
+        "acts":    { ".write": "auth != null" },
+        "msg":     { "$pid": { ".write": "auth != null" } }
+      }
+    }
+  }
+}
