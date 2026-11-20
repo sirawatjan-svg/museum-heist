@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ปล้นพิพิธภัณฑ์ — คลังคำถาม</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .top { height: 64px; display: flex; align-items: center; gap: 16px; padding: 0 22px; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; background: rgba(11,16,34,.78); backdrop-filter: blur(8px); }
+  .top .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.1rem/1 var(--display); }
+  .mark { width: 26px; height: 26px; border-radius: 7px; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; } .mark i { display: block; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+  .page-head { text-align: center; margin-bottom: 40px; }
+  .page-head h1 { font-size: clamp(2.6rem, 6vw, 4.4rem); margin-top: 12px; }
+  /* ปุ่มทั่วไปในหน้านี้ = แคปซูลมืด, .primary = แคปซูลขาว */
+  button { font: 600 .92rem/1 var(--display); padding: 12px 20px; border-radius: 999px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); cursor: pointer; transition: border-color .15s; white-space: nowrap; }
+  button:hover { border-color: var(--ink); }
+  button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  button.danger { color: var(--bad); border-color: rgba(232,80,91,.4); }
+  .sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .set-card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px; cursor: pointer; transition: border-color .15s, transform .2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; }
+  .set-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .set-card b { font: 700 1.15rem/1.3 var(--display); }
+  .two { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+  @media (max-width: 800px) { .two { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px; display: grid; gap: 10px; }
+  .qitem { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-bottom: 10px; }
+  .qitem > b { font-family: var(--display); font-weight: 600; }
+  .qitem .opt { font-size: .9rem; color: var(--muted); } .qitem .opt.ok { color: var(--accent); font-weight: 700; }
+  .qitem .acts { display: flex; gap: 6px; margin-top: 10px; } .qitem .acts button { padding: 8px 14px; font-size: .82rem; }
+  code { background: var(--bg2); padding: 2px 6px; border-radius: 6px; border: 1px solid var(--line); }
+  .err { color: var(--bad); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="top"><a class="logo" href="index.html">💎 ปล้นพิพิธภัณฑ์</a><span class="tag">คลังคำถาม</span><span class="grow"></span><a class="btn btn-primary btn-sm" href="host.html">ไปจอครู</a></div>
+
+<div class="page">
+  <div class="page-head"><span class="label">เก็บในเบราว์เซอร์นี้ · ใช้ร่วมกับเกมสงครามสี · ส่งออก CSV เพื่อสำรอง</span><h1 class="display">คลังคำถาม</h1></div>
+  <!-- รายการชุด -->
+  <div id="v-sets">
+    <div class="row" style="margin-bottom:14px"><input id="new-set-name" placeholder="ชื่อชุดใหม่ เช่น ประวัติศาสตร์ ม.2 หน่วย 3" class="grow"><button class="primary" id="btn-new-set">+ สร้างชุด</button></div>
+    <div class="sets-grid" id="sets-grid"></div>
+  </div>
+
+  <!-- รายละเอียดชุด -->
+  <div id="v-set" style="display:none">
+    <div class="row" style="margin-bottom:14px;flex-wrap:wrap">
+      <a href="#" id="back" style="color:var(--muted);font-size:1.4rem">←</a>
+      <h2 id="set-title" style="margin:0"></h2>
+      <input id="rename" style="display:none;max-width:320px">
+      <button id="btn-rename">✏️ เปลี่ยนชื่อ</button>
+      <span class="grow"></span>
+      <button id="btn-export-csv">⬇ ส่งออก CSV</button>
+      <button id="btn-export-bulk">⬇ ส่งออกแบบ |</button>
+      <button id="btn-dup">สำเนา</button>
+      <button id="btn-del-set" class="danger">🗑️ ลบทั้งชุด</button>
+    </div>
+    <div class="two">
+      <div style="display:grid;gap:14px;align-content:start">
+        <div class="panel">
+          <h3 id="form-h" style="margin:0">เพิ่มคำถามใหม่</h3>
+          <textarea id="q-text" rows="2" placeholder="คำถาม"></textarea>
+          <input id="q-a" placeholder="ตัวเลือก A"><input id="q-b" placeholder="ตัวเลือก B"><input id="q-c" placeholder="ตัวเลือก C"><input id="q-d" placeholder="ตัวเลือก D">
+          <select id="q-correct"><option value="0">เฉลย: A</option><option value="1">เฉลย: B</option><option value="2">เฉลย: C</option><option value="3">เฉลย: D</option></select>
+          <textarea id="q-explain" rows="2" placeholder="คำอธิบายเฉลย (โชว์บนมือถือเมื่อตอบผิด)"></textarea>
+          <button class="primary" id="btn-save">บันทึกลงคลัง</button>
+          <button id="btn-cancel" style="display:none">ยกเลิกการแก้ไข</button>
+          <p class="muted" id="save-status" style="margin:0"></p>
+        </div>
+        <div class="panel">
+          <button id="bulk-toggle" style="width:100%">📋 นำเข้าหลายข้อพร้อมกัน (วางข้อความ)</button>
+          <div id="bulk-body" style="display:none">
+            <p class="muted" style="font-size:.85rem;line-height:1.5;margin:4px 0">1 บรรทัดต่อ 1 คำถาม คั่นด้วย <code>|</code> (รูปแบบเดียวกับ quizjoy):<br><code>วิชา|คำถาม|A|B|C|D|เฉลย(A-D)|คำอธิบาย</code><br>ช่อง "วิชา" จะถูกข้าม ใส่อะไรก็ได้ • บรรทัดที่ขึ้นต้นด้วย # ถูกข้าม</p>
+            <textarea id="bulk-text" rows="7" style="font-family:monospace;font-size:.8rem" placeholder="สังคม ม.2|กรุงศรีอยุธยาก่อตั้ง พ.ศ. ใด|1893|1350|1767|2100|B|"></textarea>
+            <button id="btn-bulk" style="width:100%;margin-top:6px">นำเข้าทั้งหมด</button>
+            <div id="bulk-result" style="font-size:.85rem"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <label style="font-weight:800">📄 นำเข้าไฟล์ CSV <span class="muted" style="font-weight:400">(คอลัมน์: คำถาม,A,B,C,D,เฉลย,คำอธิบาย)</span></label>
+          <input type="file" id="csv-file" accept=".csv,text/csv">
+          <div id="csv-result" style="font-size:.85rem"></div>
+        </div>
+      </div>
+      <div>
+        <div class="row" style="margin-bottom:10px"><h3 style="margin:0">คำถามในชุดนี้ (<span id="q-count">0</span>)</h3><span class="grow"></span><input id="search" placeholder="ค้นหา" style="max-width:220px"></div>
+        <div id="q-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/bank.js"></script>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let cur = null, editId = null;
+
+  function renderSets() {
+    const d = Bank.load();
+    $('sets-grid').innerHTML = d.sets.map(s => `<div class="set-card" data-id="${s.id}"><b>${esc(s.name)}</b><div class="label">${s.questions.length} QUESTIONS${s.subject ? ' • ' + esc(s.subject) : ''}</div></div>`).join('');
+    $('sets-grid').querySelectorAll('.set-card').forEach(el => el.onclick = () => openSet(el.dataset.id));
+  }
+  function openSet(id) {
+    cur = Bank.getSet(id); if (!cur) return;
+    $('v-sets').style.display = 'none'; $('v-set').style.display = '';
+    $('set-title').textContent = cur.name; cancelEdit(); renderList();
+  }
+  function renderList() {
+    cur = Bank.getSet(cur.id);
+    const f = $('search').value.trim().toLowerCase();
+    const qs = cur.questions.filter(q => !f || q.text.toLowerCase().includes(f));
+    $('q-count').textContent = cur.questions.length;
+    $('q-list').innerHTML = qs.map((q, i) => `<div class="qitem"><b>${i + 1}. ${esc(q.text)}</b>${['a', 'b', 'c', 'd'].map((k, j) => `<div class="opt ${j === q.correct ? 'ok' : ''}">${'ABCD'[j]}. ${esc(q[k])}${j === q.correct ? ' ✓' : ''}</div>`).join('')}${q.explain ? `<div class="muted" style="font-size:.85rem">💡 ${esc(q.explain)}</div>` : ''}<div class="acts"><button data-e="${q.id}">แก้ไข</button><button data-d="${q.id}" class="danger">ลบ</button></div></div>`).join('') || '<p class="muted">ยังไม่มีคำถาม</p>';
+    $('q-list').querySelectorAll('[data-e]').forEach(b => b.onclick = () => startEdit(b.dataset.e));
+    $('q-list').querySelectorAll('[data-d]').forEach(b => b.onclick = () => { if (confirm('ลบคำถามนี้?')) { Bank.deleteQuestion(cur.id, b.dataset.d); renderList(); } });
+  }
+  function startEdit(qid) {
+    const q = cur.questions.find(x => x.id === qid); if (!q) return; editId = qid;
+    $('form-h').textContent = 'แก้ไขคำถาม'; $('q-text').value = q.text; $('q-a').value = q.a; $('q-b').value = q.b; $('q-c').value = q.c; $('q-d').value = q.d; $('q-correct').value = q.correct; $('q-explain').value = q.explain || '';
+    $('btn-cancel').style.display = ''; $('q-text').focus();
+  }
+  function cancelEdit() { editId = null; $('form-h').textContent = 'เพิ่มคำถามใหม่'; ['q-text', 'q-a', 'q-b', 'q-c', 'q-d', 'q-explain'].forEach(id => $(id).value = ''); $('q-correct').value = '0'; $('btn-cancel').style.display = 'none'; }
+  $('btn-save').onclick = () => {
+    const q = { text: $('q-text').value.trim(), a: $('q-a').value.trim(), b: $('q-b').value.trim(), c: $('q-c').value.trim(), d: $('q-d').value.trim(), correct: +$('q-correct').value, explain: $('q-explain').value.trim() };
+    if (!q.text || !q.a || !q.b || !q.c || !q.d) { $('save-status').textContent = 'กรอกคำถามและตัวเลือกให้ครบ 4 ข้อ'; return; }
+    if (editId) { Bank.updateQuestion(cur.id, editId, q); $('save-status').textContent = 'แก้ไขแล้ว ✓'; } else { Bank.addQuestions(cur.id, [q]); $('save-status').textContent = 'บันทึกแล้ว ✓'; }
+    cancelEdit(); renderList();
+  };
+  $('btn-cancel').onclick = cancelEdit;
+  $('search').oninput = renderList;
+  $('back').onclick = (e) => { e.preventDefault(); $('v-set').style.display = 'none'; $('v-sets').style.display = ''; renderSets(); };
+  $('btn-new-set').onclick = () => { const n = $('new-set-name').value.trim(); if (!n) return; const s = Bank.addSet(n); $('new-set-name').value = ''; openSet(s.id); };
+  $('btn-rename').onclick = () => { const inp = $('rename'); if (inp.style.display === 'none') { inp.style.display = ''; inp.value = cur.name; inp.focus(); $('btn-rename').textContent = 'บันทึกชื่อ'; } else { Bank.renameSet(cur.id, inp.value || cur.name); cur = Bank.getSet(cur.id); $('set-title').textContent = cur.name; inp.style.display = 'none'; $('btn-rename').textContent = '✏️ เปลี่ยนชื่อ'; } };
+  $('btn-del-set').onclick = () => { if (confirm(`ลบชุด "${cur.name}" ทั้งหมด ${cur.questions.length} ข้อ? กู้คืนไม่ได้`)) { Bank.deleteSet(cur.id); $('back').click(); } };
+  $('btn-dup').onclick = () => { const c = Bank.duplicateSet(cur.id); if (c) openSet(c.id); };
+  function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+  $('btn-export-csv').onclick = () => download(cur.name + '.csv', Bank.toCSV(cur), 'text/csv;charset=utf-8');
+  $('btn-export-bulk').onclick = () => download(cur.name + '.txt', Bank.toBulk(cur), 'text/plain;charset=utf-8');
+  $('bulk-toggle').onclick = () => { const b = $('bulk-body'); b.style.display = b.style.display === 'none' ? '' : 'none'; };
+  function showImport(el, res, added) {
+    let h = added ? `<p style="color:var(--ok);margin:4px 0">✅ นำเข้าสำเร็จ ${added} ข้อ</p>` : '';
+    if (res.errors.length) h += `<p class="err" style="margin:4px 0">⚠️ ข้าม ${res.errors.length} บรรทัดที่รูปแบบผิด:</p>` + res.errors.slice(0, 8).map(e => `<div class="err">บรรทัด ${e.line}: ${esc(e.message)}</div>`).join('');
+    if (!added && !res.errors.length) h = '<p class="muted">ไม่พบข้อมูล</p>';
+    el.innerHTML = h;
+  }
+  $('btn-bulk').onclick = () => { const res = Bank.parseBulk($('bulk-text').value); const n = res.valid.length ? Bank.addQuestions(cur.id, res.valid) : 0; showImport($('bulk-result'), res, n); if (n) $('bulk-text').value = ''; renderList(); };
+  $('csv-file').onchange = (e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const res = Bank.parseCSV(r.result); const n = res.valid.length ? Bank.addQuestions(cur.id, res.valid) : 0; showImport($('csv-result'), res, n); renderList(); e.target.value = ''; }; r.readAsText(f, 'utf-8'); };
+  renderSets();
+})();
+</script>
+</body>
+</html>
