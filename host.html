@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ปล้นพิพิธภัณฑ์ — จอครู</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { overflow-x: hidden; }
+  .topbar { display: flex; align-items: center; gap: 14px; padding: 14px 26px; border-bottom: 1px solid var(--line); background: rgba(11,16,34,.78); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 36px 24px 60px; }
+
+  /* ตั้งค่า */
+  .hero { text-align: center; margin-bottom: 28px; }
+  .hero h1 { font-size: clamp(2.4rem, 5vw, 4rem); }
+  .hero p { font-size: 1.15rem; color: var(--muted); margin: 10px 0 0; }
+  .setup { display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .setup { grid-template-columns: 1fr; } }
+  .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg button { font: 600 .95rem/1 var(--display); padding: 11px 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; color: var(--ink); }
+  .seg button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .field { display: grid; gap: 8px; margin-bottom: 18px; }
+  .field > span { font: 600 .95rem/1 var(--display); }
+  .rule-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .rule-list li { display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: start; font-size: 1rem; line-height: 1.45; }
+  .rule-list .n { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; background: var(--bg2); }
+  .classes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
+  .cl { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--surface); text-align: center; }
+  .cl .e { font-size: 1.8rem; } .cl b { display: block; font: 700 .92rem/1.2 var(--display); margin-top: 4px; } .cl small { color: var(--muted); font-size: .78rem; line-height: 1.3; display: block; margin-top: 4px; }
+
+  /* ล็อบบี้ */
+  .lobby { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+  .join-card { text-align: center; }
+  .code { font: 800 4.2rem/1 var(--display); letter-spacing: .06em; color: var(--ink); margin: 8px 0 14px; }
+  #qr-box { display: grid; place-items: center; padding: 12px; background: #fff; border-radius: 16px; border: 1px solid var(--line); width: fit-content; margin: 0 auto; }
+  .url { font-size: .82rem; color: var(--muted); word-break: break-all; margin-top: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font: 600 1.05rem/1 var(--display); box-shadow: var(--shadow); }
+  .chip .e { font-size: 1.2rem; }
+  .big-count { font: 800 3rem/1 var(--display); }
+
+  /* เล่น */
+  #v-play { height: 100vh; overflow: hidden; }
+  .play { display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; padding: 22px 26px; height: calc(100vh - 78px); }
+  .timer { font: 800 2.4rem/1 var(--display); min-width: 120px; text-align: center; padding: 8px 18px; border-radius: 14px; background: var(--ink); color: var(--bg); }
+  .timer.hot { background: var(--alarm); }
+  .news { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .breaking { background: var(--surface); border-radius: 24px; border: 1px solid var(--line); box-shadow: var(--shadow-lg); overflow: hidden; }
+  .breaking .bar { display: flex; align-items: center; gap: 12px; background: var(--alarm); color: #fff; padding: 12px 22px; font: 800 1.15rem/1 var(--display); letter-spacing: .02em; }
+  .breaking .bar .live { width: 12px; height: 12px; border-radius: 50%; background: var(--surface); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .25; } }
+  .breaking .head { padding: 26px 28px 30px; display: grid; grid-template-columns: 96px 1fr; gap: 22px; align-items: center; min-height: 190px; }
+  .breaking .ico { width: 96px; height: 96px; border-radius: 24px; display: grid; place-items: center; font-size: 3.2rem; background: var(--bg2); }
+  .breaking h2 { font-size: clamp(1.7rem, 2.6vw, 2.5rem); line-height: 1.25; }
+  .breaking .sub { color: var(--muted); font-size: 1.1rem; margin-top: 8px; }
+  .feed { background: var(--surface); border-radius: 20px; border: 1px solid var(--line); padding: 8px 6px; flex: 1; min-height: 0; overflow: hidden; }
+  .feed .it { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--line); font-size: 1.12rem; }
+  .feed .it:last-child { border-bottom: 0; }
+  .feed .it .e { font-size: 1.5rem; text-align: center; }
+  .feed .it .t { color: var(--muted); font-size: .85rem; font-family: var(--display); }
+  .board { background: var(--surface); border-radius: 24px; border: 1px solid var(--line); box-shadow: var(--shadow-lg); padding: 18px 18px 10px; display: flex; flex-direction: column; min-height: 0; }
+  .board h3 { font-size: 1.4rem; display: flex; align-items: center; gap: 10px; padding: 0 6px 12px; }
+  .rows { position: relative; flex: 1; }
+  .lrow { position: absolute; left: 0; right: 0; height: 52px; display: grid; grid-template-columns: 44px 36px 1fr auto; gap: 10px; align-items: center; padding: 0 12px; border-radius: 14px; transition: top .5s cubic-bezier(.3,.9,.3,1), background .3s; font-size: 1.15rem; }
+  .lrow .rk { font: 800 1.25rem/1 var(--display); text-align: center; color: var(--muted); }
+  .lrow .e { font-size: 1.4rem; text-align: center; }
+  .lrow .nm { font: 600 1.18rem/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lrow .d { font: 800 1.3rem/1 var(--display); color: var(--gem-ink); display: flex; align-items: center; gap: 6px; }
+  .lrow.r1 { background: var(--gold-soft); } .lrow.r1 .rk { color: var(--gold-ink); }
+  .lrow.r2 { background: rgba(200,210,235,.10); } .lrow.r3 { background: rgba(230,150,100,.13); }
+  .lrow.flash-up { background: var(--ok-soft) !important; } .lrow.flash-down { background: var(--alarm-soft) !important; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .stat { background: var(--bg); border-radius: 14px; padding: 10px 12px; text-align: center; }
+  .stat b { display: block; font: 800 1.6rem/1 var(--display); } .stat span { font-size: .82rem; color: var(--muted); }
+
+  .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 50; background: rgba(8,11,26,.9); backdrop-filter: blur(4px); }
+  .overlay .num { font: 800 min(32vw, 22rem)/1 var(--display); color: var(--ink); }
+  #final10 { background: transparent; backdrop-filter: none; pointer-events: none; }
+  #final10 .num { color: var(--alarm); opacity: .9; text-shadow: 0 8px 40px rgba(232,80,91,.35); }
+  #alarmedge { position: fixed; inset: 0; pointer-events: none; z-index: 40; box-shadow: inset 0 0 0 0 rgba(232,80,91,0); transition: box-shadow .3s; }
+  #alarmedge.on { animation: edge 1s infinite; }
+  @keyframes edge { 0%,100% { box-shadow: inset 0 0 0 6px rgba(232,80,91,.25); } 50% { box-shadow: inset 0 0 0 14px rgba(232,80,91,.55); } }
+
+  /* จบเกม */
+  .podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 18px; align-items: end; max-width: 900px; margin: 30px auto 0; }
+  .pod { text-align: center; }
+  .pod .who { font: 700 1.5rem/1.2 var(--display); margin: 10px 0 6px; } .pod .dd { font: 800 1.3rem/1 var(--display); color: var(--gem-ink); }
+  .pod .e { font-size: 2.6rem; }
+  .pod .block { margin-top: 14px; border-radius: 18px 18px 0 0; display: grid; place-items: center; font: 800 3rem/1 var(--display); color: #fff; }
+  .pod.p1 .block { height: 200px; background: linear-gradient(#f2bd2c, #e0a100); }
+  .pod.p2 .block { height: 140px; background: linear-gradient(#b9bfcc, #9aa1b2); }
+  .pod.p3 .block { height: 100px; background: linear-gradient(#e6a77c, #cf8a5c); }
+  .pod.hidden { visibility: hidden; }
+  .pod .block { transition: height .4s ease; }
+  .podium.compact { margin-top: 14px; }
+  .podium.compact .pod.p1 .block { height: 64px; } .podium.compact .pod.p2 .block { height: 44px; } .podium.compact .pod.p3 .block { height: 30px; }
+  .podium.compact .block { font-size: 1.6rem; }
+  .award { max-width: 760px; margin: 26px auto 0; display: grid; grid-template-columns: 120px 1fr; gap: 24px; align-items: center; background: var(--surface); border-radius: 24px; border: 1px solid var(--line); box-shadow: var(--shadow-lg); padding: 26px 30px; }
+  .award .em { font-size: 4.4rem; text-align: center; }
+  .award .an { font: 700 1.1rem/1 var(--display); color: var(--muted); }
+  .award .pn { font: 800 2.4rem/1.15 var(--display); margin: 8px 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 16px; overflow: hidden; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: .98rem; }
+  th { font: 600 .85rem/1 var(--display); color: var(--muted); background: var(--bg); }
+  #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="alarmedge"></div>
+
+<!-- ตั้งค่า -->
+<section class="view on" id="v-setup">
+  <div class="topbar"><a class="logo" href="index.html"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</a><span class="grow"></span><a class="btn btn-sm" href="bank.html">📚 คลังคำถาม</a><button class="btn btn-sm" id="btn-mute1">🔊</button></div>
+  <div class="wrap">
+    <div class="hero"><span class="tag tag-gem">MUSEUM HEIST · เกมตอบคำถามทั้งห้อง</span><h1 style="margin-top:14px">ปล้นพิพิธภัณฑ์</h1><p>ตอบคำถามให้ถูกเพื่อเก็บเพชร แล้วงัดตู้เซฟเพื่อนเพื่อแย่งเพชรมาเป็นของเรา</p></div>
+    <div class="setup">
+      <div class="card">
+        <div class="field"><span>ชุดคำถาม</span><select id="s-set"></select><small class="muted" id="s-set-info"></small></div>
+        <div class="field"><span>เวลาเล่น</span><div class="seg" id="s-dur"><button data-v="5">5 นาที</button><button data-v="7" class="on">7 นาที</button><button data-v="10">10 นาที</button></div></div>
+        <div class="field"><span>เวลาต่อข้อ</span><div class="seg" id="s-qt"><button data-v="15">15 วิ</button><button data-v="20" class="on">20 วิ</button><button data-v="30">30 วิ</button></div></div>
+        <button class="btn btn-primary btn-lg btn-block" id="btn-create">สร้างห้อง</button>
+        <p class="muted" id="s-mode" style="margin:14px 0 0;font-size:.92rem;line-height:1.5"></p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:14px">กติกาสั้น ๆ</h3>
+        <ul class="rule-list">
+          <li><span class="n">💎</span><span>ตอบถูกได้เพชร 10 เม็ด ตอบเร็วและตอบถูกติดกันได้โบนัส</span></li>
+          <li><span class="n">🎟️</span><span>ตอบถูกครบ 3 ข้อ ได้ตั๋วปล้น 1 ใบ</span></li>
+          <li><span class="n">🔓</span><span>ใช้ตั๋วเลือกเป้าหมาย แล้วงัดสลักตู้เซฟ 3 ตัวให้ทัน ยิ่งงัดได้มาก ยิ่งขโมยได้เยอะ</span></li>
+          <li><span class="n">🔒</span><span>ซื้อล็อกตู้ได้ด้วยเพชร 20 เม็ด กันการปล้นได้ 1 ครั้ง</span></li>
+        </ul>
+        <div class="classes" id="s-classes"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ล็อบบี้ -->
+<section class="view" id="v-lobby">
+  <div class="topbar"><span class="logo"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</span><span class="grow"></span><button class="btn btn-sm" id="btn-mute2">🔊</button><button class="btn btn-sm btn-ghost" id="btn-close1">ปิดห้อง</button></div>
+  <div class="wrap">
+    <div class="lobby">
+      <div class="card join-card">
+        <span class="label">สแกนเพื่อเข้าร่วม</span>
+        <div id="qr-box" style="margin-top:12px"></div>
+        <p id="l-local" hidden style="margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--alarm-soft);border:1px solid rgba(255,79,94,.45);font-size:.9rem;line-height:1.45">🧪 <b>โหมดทดลองในเครื่อง</b> มือถือสแกนเข้าไม่ได้ ให้เปิดลิงก์ด้านล่างในแท็บใหม่ของเบราว์เซอร์นี้แทน · ใช้มือถือจริงต้องเปิดจากเว็บที่อัปขึ้นแล้ว</p>
+        <div class="label" style="margin-top:16px">รหัสห้อง</div>
+        <div class="code" id="l-code">------</div>
+        <div class="url" id="l-url"></div>
+      </div>
+      <div>
+        <div class="row"><div><div class="label">แก๊งโจรที่เข้ามาแล้ว</div><div class="big-count"><span id="l-count">0</span> คน</div></div><span class="grow"></span><button class="btn btn-gold btn-lg" id="btn-start">เริ่มปฏิบัติการ ▶</button></div>
+        <p class="muted" style="margin:8px 0 0">นักเรียนเลือกอาชีพโจรในมือถือได้ระหว่างรอ ใครยังไม่เลือกจะได้อาชีพแบบสุ่ม</p>
+        <div class="chips" id="l-chips"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- เล่น -->
+<section class="view" id="v-play">
+  <div class="topbar">
+    <span class="logo"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</span>
+    <span class="tag" id="hud-room">ROOM</span><span class="tag" id="hud-players">0 คน</span>
+    <span class="grow"></span>
+    <div class="timer" id="hud-timer">0:00</div>
+    <span class="grow"></span>
+    <button class="btn btn-sm" id="btn-mute3">🔊</button><button class="btn btn-sm" id="btn-fs">⛶</button><button class="btn btn-sm btn-ghost" id="btn-endnow">จบเกม</button>
+  </div>
+  <div class="play">
+    <div class="news">
+      <div class="breaking"><div class="bar"><span class="live"></span>ข่าวด่วน<span class="grow"></span><span style="font-weight:600;font-size:.95rem;opacity:.9">สถานีข่าวพิพิธภัณฑ์</span></div>
+        <div class="head" id="brk"><div class="ico">🏛️</div><div><h2>พิพิธภัณฑ์เปิดทำการแล้ว!</h2><div class="sub">ตอบคำถามให้ถูกเพื่อเก็บเพชรเม็ดแรก</div></div></div></div>
+      <div class="feed" id="feed"></div>
+    </div>
+    <div class="board">
+      <h3>🏆 จอมโจรอันดับต้น</h3>
+      <div class="rows" id="rows"></div>
+      <div class="stats-row"><div class="stat"><b id="st-stolen">0</b><span>เพชรถูกขโมยรวม</span></div><div class="stat"><b id="st-heists">0</b><span>ปล้นสำเร็จ</span></div><div class="stat"><b id="st-blocks">0</b><span>ล็อกกันไว้ได้</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- จบ -->
+<section class="view" id="v-end">
+  <div class="topbar"><span class="logo"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</span><span class="grow"></span><button class="btn btn-sm" id="btn-rematch">เล่นอีกรอบ</button><button class="btn btn-sm btn-ghost" id="btn-close2">ปิดห้อง</button></div>
+  <div class="wrap" style="text-align:center">
+    <span class="tag tag-gold">ปิดพิพิธภัณฑ์แล้ว</span>
+    <h1 style="font-size:3rem;margin-top:12px">ทำเนียบจอมโจร</h1>
+    <div class="podium" id="podium"></div>
+    <div id="e-award"></div>
+    <div style="margin-top:26px"><button class="btn btn-primary btn-lg" id="btn-next">ประกาศรางวัลถัดไป ▶</button><div class="muted" style="margin-top:8px;font-size:.9rem">หรือกด Space</div></div>
+    <div id="e-board" style="display:none;margin-top:30px;text-align:left"><table id="e-table"></table></div>
+  </div>
+</section>
+
+<div class="overlay" id="countdown"><div class="num" id="cd-num">3</div></div>
+<div class="overlay" id="final10"><div class="num" id="f10"></div></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fe6f7"/><stop offset=".55" stop-color="#19a7c9"/><stop offset="1" stop-color="#0d6e86"/></linearGradient>
+  <symbol id="gem" viewBox="0 0 64 64"><path d="M14 8h36l12 16-30 34L2 24z" fill="url(#gg)"/><path d="M2 24h60M14 8l8 16 10 34 10-34 8-16M22 24 32 8l10 16" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/net.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/bank.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/host.js"></script>
+</body>
+</html>
