@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ปล้นพิพิธภัณฑ์</title>
+<meta name="description" content="เกมตอบคำถามทั้งห้อง ตอบถูกได้เพชร สะสมตั๋วแล้วงัดตู้เซฟเพื่อน">
+<meta name="theme-color" content="#0b1022">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Kanit:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1022; --panel: rgba(14,19,40,.88); --glass: rgba(255,255,255,.06);
+    --ink: #f2f4fb; --muted: #9aa3bd; --line: rgba(255,255,255,.12); --line-strong: rgba(255,255,255,.22);
+    --gold: #f4b400; --gem: #3fd0f0; --alarm: #ff4f5e; --ok: #3ddc97;
+    --pixel: 'Silkscreen', 'Kanit', system-ui, sans-serif;
+    --display: 'Kanit', system-ui, sans-serif;
+    --body: 'Sarabun', 'Kanit', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--body); -webkit-font-smoothing: antialiased; overflow: hidden; }
+  a { color: inherit; }
+  button { font: inherit; color: inherit; }
+
+  /* ฉากเต็มจอ */
+  .stage { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
+  .art { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .vignette { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 58% 42% at 50% 34%, rgba(8,11,26,.62), rgba(8,11,26,.2) 70%, transparent 85%),
+                radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, rgba(4,6,14,.75)); }
+  .scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(255,255,255,.025) 0 1px, transparent 1px 4px); }
+  #hero-cv { position: absolute; left: 0; top: 0; pointer-events: none; }
+  @keyframes laser { 0%,100% { opacity: .6 } 50% { opacity: 1 } }
+  .laser { animation: laser 2.4s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: .15 } 50% { opacity: 1 } }
+  .star { animation: twinkle 3s ease-in-out infinite; }
+
+  /* แถบบน */
+  .top { position: absolute; z-index: 5; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; padding: max(16px, env(safe-area-inset-top)) 20px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 700 1rem/1 var(--display); text-decoration: none; }
+  .brand svg { width: 28px; height: 28px; filter: drop-shadow(0 0 8px rgba(63,208,240,.6)); }
+  .badge { font: 400 .6rem/1 var(--pixel); letter-spacing: .14em; text-transform: uppercase; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+  .music { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 999px; border: 1px solid var(--line-strong); background: rgba(10,14,30,.6); backdrop-filter: blur(8px); font: 600 .88rem/1 var(--display); cursor: pointer; }
+  .music .eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+  .music .eq i { width: 3px; background: var(--gold); border-radius: 2px; height: 4px; }
+  .music.on .eq i { animation: eq .9s ease-in-out infinite; }
+  .music.on .eq i:nth-child(2) { animation-delay: -.3s; } .music.on .eq i:nth-child(3) { animation-delay: -.6s; }
+  @keyframes eq { 0%,100% { height: 4px } 50% { height: 14px } }
+
+  /* กลางจอ */
+  .center { position: absolute; z-index: 4; left: 0; right: 0; top: clamp(70px, 11vh, 120px); display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 16px; }
+  .kicker { font: 400 .72rem/1 var(--pixel); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(244,180,0,.45); background: rgba(244,180,0,.08); padding: 8px 14px; border-radius: 999px; }
+  .wordmark { margin: 16px 0 0; font: 800 clamp(2.9rem, 9.6vw, 7.4rem)/1.02 var(--display); letter-spacing: -.02em; text-shadow: 0 6px 40px rgba(0,0,0,.6); }
+  .wordmark .gem { background: linear-gradient(120deg, #8ff0ff, #3fd0f0 45%, #1a8fb8); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 18px rgba(63,208,240,.45)); }
+  .wordmark-px { margin: 12px 0 0; padding-left: .5em; font: 700 clamp(.85rem, 2vw, 1.2rem)/1 var(--pixel); letter-spacing: .5em; color: #cfd6ea; }
+  .tagline { margin: 16px auto 0; max-width: 32em; color: #c3cbe0; font-size: clamp(.98rem, 1.9vw, 1.15rem); }
+
+  /* แถวเมนู: ซ้าย 2 · เริ่มภารกิจ · ขวา 2 */
+  .menu { display: grid; grid-template-columns: auto auto auto auto auto; align-items: center; gap: 12px; margin-top: clamp(22px, 4vh, 36px); }
+  .mbtn { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; min-width: 104px; padding: 12px 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(10,14,30,.55); backdrop-filter: blur(10px); cursor: pointer; text-decoration: none; transition: transform .15s, border-color .15s, background .15s; }
+  .mbtn:hover { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(20,26,52,.75); }
+  .mbtn .ic { font-size: 1.35rem; line-height: 1; }
+  .mbtn b { font: 600 .95rem/1 var(--display); }
+  .mbtn small { font: 400 .55rem/1 var(--pixel); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .start { position: relative; margin: 0 10px; padding: 22px 38px; border-radius: 999px; border: 0; cursor: pointer; background: linear-gradient(180deg, #ffd23f, var(--gold)); color: #1a1300; font: 800 clamp(1.25rem, 2.6vw, 1.6rem)/1 var(--display); letter-spacing: .01em; box-shadow: 0 0 0 6px rgba(244,180,0,.16), 0 14px 40px rgba(244,180,0,.35); transition: transform .15s; white-space: nowrap; }
+  .start small { display: block; margin-top: 8px; font: 400 .6rem/1 var(--pixel); letter-spacing: .2em; opacity: .7; }
+  .start:hover { transform: translateY(-2px) scale(1.02); }
+  @keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(244,180,0,.5), 0 14px 40px rgba(244,180,0,.35) } 100% { box-shadow: 0 0 0 18px rgba(244,180,0,0), 0 14px 40px rgba(244,180,0,.35) } }
+  .start { animation: ring 2s ease-out infinite; }
+  .mbtn:focus-visible, .start:focus-visible, .music:focus-visible, .x:focus-visible, .choice:focus-visible { outline: 3px solid var(--gem); outline-offset: 3px; }
+
+  /* แผ่นซ้อน */
+  .sheet-bg { position: fixed; inset: 0; z-index: 20; background: rgba(3,5,12,.55); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 16px; }
+  .sheet-bg.on { display: flex; }
+  .sheet { position: relative; width: min(820px, 100%); max-height: min(86svh, 760px); overflow: auto; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 26px; padding: 28px clamp(18px, 4vw, 34px) 30px; box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: up .3s cubic-bezier(.2,.9,.3,1) both; }
+  @keyframes up { from { opacity: 0; transform: translateY(24px) scale(.98) } to { opacity: 1; transform: none } }
+  .sheet h2 { margin: 6px 0 4px; font: 800 clamp(1.6rem, 4vw, 2.2rem)/1.15 var(--display); }
+  .sheet .lab { font: 400 .66rem/1 var(--pixel); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+  .sheet .sub { color: var(--muted); margin: 0 0 20px; }
+  .x { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line-strong); background: rgba(255,255,255,.06); cursor: pointer; font-size: 1.1rem; }
+  .pane { display: none; } .pane.on { display: block; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stepc { background: var(--glass); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+  .stepc .n { font: 700 .7rem/1 var(--pixel); letter-spacing: .12em; color: var(--gold); }
+  .stepc h3 { margin: 8px 0 6px; font: 700 1.15rem/1.25 var(--display); }
+  .stepc ul { margin: 0; padding-left: 1.1em; color: #c3cbe0; font-size: .93rem; }
+  .stepc li { margin: 3px 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .note { background: rgba(63,208,240,.07); border: 1px solid rgba(63,208,240,.25); border-radius: 16px; padding: 14px 16px; font-size: .93rem; color: #cfe9f2; }
+  .note b { color: #fff; font-family: var(--display); }
+
+  .crew { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .cc { position: relative; border-radius: 18px; overflow: hidden; min-height: 196px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cc .cov { position: absolute; inset: 0; }
+  .cc .cov::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.22) 1.4px, transparent 1.5px); background-size: 16px 16px; }
+  .cc .emo { position: absolute; top: 18px; left: 50%; transform: translateX(-50%) rotate(-6deg); font-size: 3rem; filter: drop-shadow(0 8px 14px rgba(0,0,0,.35)); }
+  .cc .tg { position: absolute; top: 10px; left: 10px; font: 400 .55rem/1 var(--pixel); letter-spacing: .12em; background: rgba(255,255,255,.9); color: #111; padding: 6px 9px; border-radius: 99px; }
+  .cc .gl { position: relative; margin: 8px; background: rgba(0,0,0,.55); backdrop-filter: blur(10px); border-radius: 14px; padding: 10px 11px; }
+  .cc .t { font: 700 .68rem/1.2 var(--pixel); letter-spacing: .06em; text-transform: uppercase; opacity: .8; }
+  .cc .th { font: 700 1rem/1.2 var(--display); margin-top: 3px; }
+  .cc .d { font-size: .82rem; line-height: 1.35; margin-top: 3px; opacity: .9; }
+  .grp { font: 400 .62rem/1 var(--pixel); letter-spacing: .16em; color: var(--muted); margin: 22px 0 10px; text-transform: uppercase; }
+  .grp:first-of-type { margin-top: 4px; }
+
+  .list { display: grid; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 16px; background: var(--glass); border: 1px solid var(--line); text-decoration: none; transition: border-color .15s, background .15s; }
+  .row:hover { border-color: var(--line-strong); background: rgba(255,255,255,.09); }
+  .row .ic { font-size: 1.7rem; }
+  .row b { display: block; font: 600 1.05rem/1.2 var(--display); }
+  .row span { color: var(--muted); font-size: .9rem; }
+  .row .go { margin-left: auto; color: var(--muted); font-size: 1.2rem; }
+
+  .choices { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+  .choice { display: flex; flex-direction: column; gap: 10px; padding: 22px 20px; border-radius: 22px; border: 1px solid var(--line-strong); background: var(--glass); text-decoration: none; text-align: left; }
+  .choice .ic { font-size: 2.2rem; line-height: 1; }
+  .choice b { font: 700 1.35rem/1.2 var(--display); }
+  .choice p { margin: 0; color: #c3cbe0; font-size: .93rem; }
+  .choice.teacher { background: linear-gradient(160deg, rgba(244,180,0,.18), rgba(244,180,0,.04)); border-color: rgba(244,180,0,.5); cursor: pointer; }
+  .choice.teacher:hover { border-color: var(--gold); }
+  .bigbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 22px; border-radius: 999px; border: 0; cursor: pointer; font: 700 1.05rem/1 var(--display); text-decoration: none; }
+  .bigbtn.gold { background: var(--gold); color: #1a1300; }
+  .bigbtn.gem { background: var(--gem); color: #04212b; }
+  .bigbtn.ghost { background: transparent; border: 1px solid var(--line-strong); color: var(--ink); }
+  .bigbtn:disabled { opacity: .4; cursor: not-allowed; }
+  .codein { display: flex; gap: 8px; }
+  .codein input { flex: 1; min-width: 0; width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line-strong); background: rgba(0,0,0,.35); color: var(--ink); font: 700 1.3rem/1 var(--pixel); letter-spacing: .2em; text-align: center; }
+  .codein input::placeholder { color: rgba(255,255,255,.3); letter-spacing: .1em; font-size: 1rem; }
+  .codein input:focus { outline: 2px solid var(--gem); border-color: transparent; }
+  .local { margin-top: 16px; font-size: .86rem; color: var(--muted); background: rgba(255,255,255,.04); border: 1px dashed var(--line-strong); border-radius: 14px; padding: 10px 14px; }
+
+  /* มือถือ / จอเตี้ย */
+  @media (max-width: 860px) {
+    .menu { grid-template-columns: 1fr 1fr; width: min(420px, 100%); gap: 10px; }
+    .start { grid-column: 1 / -1; order: -1; margin: 0 0 4px; padding: 20px 0; width: 100%; }
+    .mbtn { min-width: 0; flex-direction: row; justify-content: center; padding: 12px 10px; gap: 8px; }
+    .mbtn small { display: none; }
+    .steps, .crew { grid-template-columns: 1fr 1fr; }
+    .steps .stepc:last-child { grid-column: 1 / -1; }
+    .two, .choices { grid-template-columns: minmax(0, 1fr); }
+    .top .label-long { display: none; }
+  }
+  @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } .crew .cc { min-height: 178px; } .cc .emo { font-size: 2.5rem; } }
+  @media (max-height: 640px) { .center { top: 62px; } .tagline { display: none; } .wordmark { font-size: clamp(2.4rem, 8vw, 5rem); } }
+  @media (prefers-reduced-motion: reduce) { .start, .sheet { animation: none; } }
+</style>
+</head>
+<body>
+
+<main class="stage" id="stage">
+  <svg class="art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1330"/><stop offset="1" stop-color="#17204a"/></linearGradient>
+      <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#151d42"/><stop offset="1" stop-color="#070a18"/></linearGradient>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16285a"/><stop offset="1" stop-color="#2a4c8a"/></linearGradient>
+      <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc3ff" stop-opacity=".16"/><stop offset="1" stop-color="#9cc3ff" stop-opacity="0"/></linearGradient>
+      <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2cc" stop-opacity=".02"/><stop offset="1" stop-color="#fff2cc" stop-opacity=".22"/></linearGradient>
+      <linearGradient id="gemg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d4fbff"/><stop offset=".45" stop-color="#3fd0f0"/><stop offset="1" stop-color="#0a6f94"/></linearGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c99a2e"/><stop offset="1" stop-color="#5e430c"/></linearGradient>
+      <radialGradient id="gemglow"><stop offset="0" stop-color="#3fd0f0" stop-opacity=".55"/><stop offset="1" stop-color="#3fd0f0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="moonglow"><stop offset="0" stop-color="#e8f0ff" stop-opacity=".5"/><stop offset="1" stop-color="#e8f0ff" stop-opacity="0"/></radialGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+      <pattern id="flute" width="14" height="10" patternUnits="userSpaceOnUse"><rect width="14" height="10" fill="#222c58"/><rect x="10" width="2" height="10" fill="#18214a"/></pattern>
+    </defs>
+    <rect width="1600" height="900" fill="url(#wall)"/>
+    <g fill="none" stroke="#1d275a" stroke-width="10">
+      <path d="M-40 230 Q 160 40 360 230"/><path d="M360 230 Q 560 40 760 230"/><path d="M840 230 Q 1040 40 1240 230"/><path d="M1240 230 Q 1440 40 1640 230"/>
+    </g>
+    <!-- หน้าต่างโค้งรับแสงจันทร์ -->
+    <g>
+      <path d="M218 500 V320 A82 82 0 0 1 382 320 V500Z" fill="url(#sky)" stroke="#2c3874" stroke-width="8"/>
+      <circle cx="330" cy="318" r="70" fill="url(#moonglow)"/><circle cx="330" cy="318" r="26" fill="#f2f0dc"/><circle cx="341" cy="311" r="22" fill="url(#sky)" opacity=".0"/>
+      <path d="M300 238 V500 M218 400 H382" stroke="#1a2350" stroke-width="7"/>
+      <path d="M1218 500 V320 A82 82 0 0 1 1382 320 V500Z" fill="url(#sky)" stroke="#2c3874" stroke-width="8"/>
+      <path d="M1300 238 V500 M1218 400 H1382" stroke="#1a2350" stroke-width="7"/>
+      <g fill="#fff"><circle class="star" cx="1250" cy="300" r="2.2"/><circle class="star" style="animation-delay:1s" cx="1345" cy="285" r="1.8"/><circle class="star" style="animation-delay:2s" cx="1270" cy="370" r="1.6"/><circle class="star" style="animation-delay:.5s" cx="1360" cy="360" r="2"/><circle class="star" style="animation-delay:1.6s" cx="250" cy="440" r="1.6"/></g>
+      <path d="M218 500 L382 500 L520 900 L120 900Z" fill="url(#shaft)"/>
+      <path d="M1218 500 L1382 500 L1480 900 L1080 900Z" fill="url(#shaft)"/>
+    </g>
+    <!-- ภาพในกรอบ (มืดสลัว) -->
+    <g opacity=".85">
+      <rect x="560" y="300" width="120" height="150" rx="4" fill="url(#gold)"/><rect x="570" y="310" width="100" height="130" fill="#2a3a6a"/><path d="M580 430 L620 340 L660 430Z" fill="#2f8fb0"/>
+      <rect x="920" y="300" width="120" height="150" rx="4" fill="url(#gold)"/><rect x="930" y="310" width="100" height="130" fill="#3a2a5a"/><circle cx="980" cy="370" r="28" fill="#b06a3a"/>
+    </g>
+    <!-- เสา -->
+    <g>
+      <g id="col"><rect x="0" y="150" width="96" height="22" fill="#26306a" stroke="#1a2350" stroke-width="3"/><rect x="10" y="172" width="76" height="420" fill="url(#flute)" stroke="#1a2350" stroke-width="3"/><rect x="-6" y="590" width="108" height="16" fill="#26306a" stroke="#1a2350" stroke-width="3"/></g>
+      <use href="#col" x="60"/><use href="#col" x="460"/><use href="#col" x="1044"/><use href="#col" x="1444"/>
+    </g>
+    <rect y="600" width="1600" height="16" fill="#1d275a"/>
+    <!-- พื้นหินอ่อน -->
+    <rect y="616" width="1600" height="284" fill="url(#floor)"/>
+    <g stroke="#232d63" stroke-width="2" opacity=".75">
+      <path d="M800 560 L-400 900M800 560 L0 900M800 560 L400 900M800 560 L800 900M800 560 L1200 900M800 560 L1600 900M800 560 L2000 900"/>
+      <path d="M0 650 H1600M0 700 H1600M0 770 H1600M0 860 H1600"/>
+    </g>
+    <!-- สปอตไลต์บนเพชร -->
+    <path d="M770 0 L830 0 L960 760 L640 760Z" fill="url(#cone)"/>
+    <ellipse cx="800" cy="806" rx="190" ry="30" fill="#3fd0f0" opacity=".12"/>
+    <!-- แท่นและตู้กระจก -->
+    <rect x="700" y="690" width="200" height="110" rx="6" fill="#1e2858" stroke="#2f3b7a" stroke-width="3"/>
+    <rect x="684" y="676" width="232" height="22" rx="5" fill="#2a3570" stroke="#3a4790" stroke-width="3"/>
+    <circle cx="800" cy="612" r="150" fill="url(#gemglow)"/>
+    <rect x="720" y="560" width="160" height="116" rx="8" fill="#3fd0f0" fill-opacity=".07" stroke="#5fd9f5" stroke-opacity=".45" stroke-width="3"/>
+    <g transform="translate(800 618)">
+      <path d="M-40 -26 H40 L58 -4 L0 46 L-58 -4Z" fill="url(#gemg)"/>
+      <path d="M-58 -4 H58 M-40 -26 L-20 -4 L0 46 L20 -4 L40 -26 M-20 -4 L0 -26 L20 -4" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2.5" stroke-linejoin="round"/>
+    </g>
+    <g fill="#fff"><path class="star" d="M846 574 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z"/><path class="star" style="animation-delay:1.2s" d="M752 600 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/></g>
+    <!-- เชือกกั้น -->
+    <g><rect x="560" y="690" width="12" height="120" rx="6" fill="url(#gold)"/><rect x="1028" y="690" width="12" height="120" rx="6" fill="url(#gold)"/>
+      <path d="M566 700 Q 640 760 700 720M1034 700 Q 960 760 900 720" fill="none" stroke="#8e1a2e" stroke-width="9" stroke-linecap="round"/></g>
+    <!-- เลเซอร์กันขโมย -->
+    <g class="laser" stroke="#ff4f5e" stroke-linecap="round">
+      <g filter="url(#glow)" stroke-width="10" opacity=".7"><path d="M0 760 L1600 690"/><path d="M0 700 L1600 820"/><path d="M0 850 L1600 760"/></g>
+      <g stroke-width="2.5"><path d="M0 760 L1600 690"/><path d="M0 700 L1600 820"/><path d="M0 850 L1600 760"/></g>
+    </g>
+  </svg>
+  <div class="vignette"></div>
+  <canvas id="hero-cv" aria-hidden="true"></canvas>
+  <div class="scan"></div>
+
+  <header class="top">
+    <span class="brand" aria-label="ปล้นพิพิธภัณฑ์">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 8h36l12 16-30 34L2 24z" fill="#3fd0f0"/><path d="M2 24h60M14 8l8 16 10 34 10-34 8-16M22 24 32 8l10 16" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="3" stroke-linejoin="round"/></svg>
+      <span class="label-long">ปล้นพิพิธภัณฑ์</span>
+    </span>
+    <span class="badge">beta</span>
+    <button class="music" id="music" type="button" aria-label="เปิดหรือปิดเพลง" aria-pressed="false"><span class="eq"><i></i><i></i><i></i></span><span id="musicLbl">เปิดเพลง</span></button>
+  </header>
+
+  <section class="center">
+    <span class="kicker">Night shift · ภารกิจกะดึก</span>
+    <h1 class="wordmark">ปล้น<span class="gem">พิพิธภัณฑ์</span></h1>
+    <p class="wordmark-px">Museum heist</p>
+    <p class="tagline">ตอบคำถามให้ถูก เก็บเพชรให้มาก แล้วงัดตู้เซฟของเพื่อนก่อนพิพิธภัณฑ์ปิด</p>
+
+    <nav class="menu" aria-label="เมนูหลัก">
+      <button class="mbtn" type="button" data-open="how"><span class="ic">📜</span><b>วิธีเล่น</b><small>How to</small></button>
+      <button class="mbtn" type="button" data-open="crew"><span class="ic">🦹</span><b>ทีมโจร</b><small>The crew</small></button>
+      <button class="start" type="button" data-open="start">เริ่มภารกิจ<small>START HEIST</small></button>
+      <button class="mbtn" type="button" data-open="bank"><span class="ic">🗂️</span><b>คลังคำถาม</b><small>Questions</small></button>
+      <button class="mbtn" type="button" data-open="more"><span class="ic">🎮</span><b>เกมอื่น</b><small>More games</small></button>
+    </nav>
+  </section>
+</main>
+
+<!-- แผ่นซ้อน -->
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <button class="x" type="button" id="closeBtn" aria-label="ปิด">✕</button>
+
+    <!-- เริ่มภารกิจ -->
+    <div class="pane" data-pane="start">
+      <span class="lab">Start the heist</span>
+      <h2 id="t-start">เริ่มภารกิจ</h2>
+      <p class="sub">ครูเปิดห้องบนจอโปรเจคเตอร์ก่อน แล้วนักเรียนสแกน QR หรือพิมพ์รหัสห้อง 6 หลัก</p>
+      <div class="choices">
+        <a class="choice teacher" id="goHost" href="host.html">
+          <span class="ic">🧑‍🏫</span><b>ครู: เปิดห้อง</b>
+          <p>เลือกชุดคำถาม ตั้งเวลา แล้วฉายจอนี้ขึ้นโปรเจคเตอร์ ระบบจะสร้างรหัสห้องกับ QR ให้</p>
+          <span class="bigbtn gold" style="margin-top:4px">เปิดห้องเลย →</span>
+        </a>
+        <div class="choice">
+          <span class="ic">🎒</span><b>นักเรียน: เข้าห้อง</b>
+          <p>พิมพ์รหัสห้องที่อยู่บนจอครู</p>
+          <form class="codein" id="joinForm" autocomplete="off">
+            <input id="roomCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="รหัส 6 หลัก" aria-label="รหัสห้อง 6 หลัก">
+            <button class="bigbtn gem" id="joinBtn" type="submit" disabled>เข้า</button>
+          </form>
+          <a href="play.html" id="goPlay" style="font-size:.88rem;color:var(--muted)">ไม่มีรหัส? เปิดหน้าเข้าห้อง</a>
+        </div>
+      </div>
+      <p class="local" id="localNote" hidden>🧪 เปิดจากเครื่องนี้ (localhost) จึงเข้า <b>โหมดทดลองในเครื่อง</b> อัตโนมัติ: เปิดจอครูหนึ่งแท็บ แล้วเปิดหน้านักเรียนอีกหลายแท็บในเบราว์เซอร์เดียวกัน</p>
+    </div>
+
+    <!-- วิธีเล่น -->
+    <div class="pane" data-pane="how">
+      <span class="lab">How to play</span>
+      <h2>วิธีเล่น</h2>
+      <p class="sub">ทั้งห้องเล่นพร้อมกัน แต่ละคนตอบคำถามบนมือถือตามจังหวะของตัวเอง เวลาหมด ใครถือเพชรมากที่สุดคือจอมโจรอันดับหนึ่ง</p>
+      <div class="steps">
+        <div class="stepc"><span class="n">01 · ANSWER</span><h3>💎 ตอบถูก เก็บเพชร</h3><ul><li>ถูก 1 ข้อ ได้ 10 เพชร</li><li>ตอบเร็วได้เพิ่มสูงสุด +5</li><li>ถูกติดกันตั้งแต่ 3 ข้อ +5</li><li>ถูกครบ 3 ข้อ ได้ตั๋วปล้น 1 ใบ</li></ul></div>
+        <div class="stepc"><span class="n">02 · CRACK</span><h3>🔓 งัดตู้เซฟ</h3><ul><li>ใช้ตั๋วเลือกตู้ของเพื่อน</li><li>แตะตอนเข็มอยู่ในโซนเขียว 3 ครั้ง ภายใน 9 วินาที</li><li>ได้ 3/3 ขโมย 25% · 2/3 ขโมย 15%</li><li>ได้ 0–1 สัญญาณดัง ตั๋วเสีย</li></ul></div>
+        <div class="stepc"><span class="n">03 · LOCK</span><h3>🔒 ล็อกตู้</h3><ul><li>ใช้ 20 เพชรซื้อล็อก กันได้ 1 ครั้ง</li><li>โจรที่มาเจอล็อกเสียตั๋วฟรี</li><li>เพิ่งโดนปล้น ได้โล่ 25 วินาที</li></ul></div>
+      </div>
+      <div class="two">
+        <div class="note"><b>📽️ จอครู</b> ฉายข่าวด่วนการปล้น อันดับ 10 คนแรก และโพเดียมตอนจบ</div>
+        <div class="note"><b>📱 มือถือนักเรียน</b> ตอบคำถาม ปล้น ล็อกตู้ และเห็นอันดับ 1–3 กับอันดับตัวเอง</div>
+      </div>
+    </div>
+
+    <!-- ทีมโจร -->
+    <div class="pane" data-pane="crew">
+      <span class="lab">The crew</span>
+      <h2>ทีมโจร</h2>
+      <p class="sub">นักเรียนเลือกอาชีพตอนเข้าห้อง แต่ละอาชีพมีพลังพิเศษหนึ่งอย่าง ส่วนรางวัลพิเศษแจกบนโพเดียมตอนจบเกม และคนที่ไม่ได้รางวัลจะได้เหรียญ</p>
+      <div class="grp">อาชีพ · เลือกได้ 1</div>
+      <div class="crew" id="crewA"></div>
+      <div class="grp">รางวัลพิเศษ · ตอนจบเกม</div>
+      <div class="crew" id="crewB"></div>
+    </div>
+
+    <!-- คลังคำถาม -->
+    <div class="pane" data-pane="bank">
+      <span class="lab">Question bank</span>
+      <h2>คลังคำถาม</h2>
+      <p class="sub">เตรียมชุดคำถามไว้ก่อนเปิดห้อง แล้วเลือกชุดที่ต้องการตอนตั้งค่าบนจอครู คำถามเก็บไว้ในเบราว์เซอร์ของเครื่องที่ใช้สร้าง</p>
+      <div class="list">
+        <a class="row" href="bank.html"><span class="ic">🗂️</span><div><b>เปิดคลังคำถาม</b><span>สร้างชุด เพิ่มหรือแก้ข้อ ข้อละ 4 ตัวเลือก</span></div><span class="go">→</span></a>
+        <div class="row"><span class="ic">🔀</span><div><b>ลำดับไม่ซ้ำกัน</b><span>นักเรียนแต่ละคนได้คำถามและตัวเลือกสลับลำดับ ลอกกันยาก</span></div></div>
+        <div class="row"><span class="ic">🎨</span><div><b>ใช้ร่วมกับเกมสงครามสี</b><span>เมื่อเปิดจากเว็บเดียวกัน ชุดคำถามที่ทำไว้ใช้ได้ทั้งสองเกม</span></div></div>
+      </div>
+    </div>
+
+    <!-- เกมอื่น -->
+    <div class="pane" data-pane="more">
+      <span class="lab">More games</span>
+      <h2>เกมอื่นของห้องเรียน</h2>
+      <p class="sub">เกมที่เปิดให้เล่นแล้ว</p>
+      <div class="list">
+        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-boss-game/"><span class="ic">⚔️</span><div><b>นักธรรมปราบกิเลส</b><span>ตอบคำถามธรรมะ โจมตีบอสกิเลส</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-fishing-game/"><span class="ic">🎣</span><div><b>นักธรรมตกปลา</b><span>ตอบถูกแล้วตกปลา</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/ayutthaya-night-game/"><span class="ic">🌙</span><div><b>ค่ำคืนว้าวุ่นในเมืองอยุธยา</b><span>เกมบทบาทลับทั้งห้อง</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/quizjoy/"><span class="ic">🙋</span><div><b>Quizjoy</b><span>ตอบคำถามด้วยท่าทางหน้ากล้อง</span></div><span class="go">↗</span></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/sfx.js"></script>
+<script src="js/hero-anim.js"></script>
+<script>
+/* เพลงย่องเบา: เริ่มเมื่อแตะ/คลิกครั้งแรก (เบราว์เซอร์ห้ามเล่นเสียงเอง) */
+(function () {
+  if (typeof SFX === 'undefined') return;
+  var b = document.getElementById('music'), lbl = document.getElementById('musicLbl');
+  function sync(on) { b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); lbl.textContent = on ? 'เพลง: เปิด' : 'เพลง: ปิด'; }
+  var startedAt = 0;
+  SFX.ambient('heist', 100, function () { startedAt = performance.now(); sync(true); });
+  b.addEventListener('click', function () {
+    SFX.ensure();
+    if (performance.now() - startedAt < 800) return;
+    if (!SFX.debug().musicOn && !SFX.isMuted()) { SFX.startMusic(100, 'heist'); sync(true); return; }
+    SFX.setMuted(!SFX.isMuted()); sync(!SFX.isMuted());
+  });
+})();
+
+/* เมนู + แผ่นซ้อน */
+(function () {
+  var bg = document.getElementById('sheetBg'), panes = [].slice.call(document.querySelectorAll('.pane')), lastBtn = null;
+  var dlg = bg.querySelector('.sheet');
+  function open(k, btn) {
+    lastBtn = btn || null;
+    panes.forEach(function (p) { p.classList.toggle('on', p.dataset.pane === k); });
+    var h = bg.querySelector('.pane.on h2'); if (h) { [].forEach.call(document.querySelectorAll('.pane h2'), function (x) { x.removeAttribute('id'); }); h.id = 'sheetTitle'; }
+    bg.classList.add('on');
+    dlg.style.animation = 'none'; dlg.offsetHeight; dlg.style.animation = '';
+    dlg.scrollTop = 0;
+    if (typeof SFX !== 'undefined' && !SFX.isMuted()) SFX.play('pop');
+    setTimeout(function () { (k === 'start' ? document.getElementById('roomCode') : document.getElementById('closeBtn')).focus(); }, 60);
+  }
+  function close() { bg.classList.remove('on'); if (lastBtn) lastBtn.focus(); }
+  [].forEach.call(document.querySelectorAll('[data-open]'), function (b) { b.addEventListener('click', function () { open(b.dataset.open, b); }); });
+  document.getElementById('closeBtn').addEventListener('click', close);
+  bg.addEventListener('click', function (e) { if (e.target === bg) close(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && bg.classList.contains('on')) close(); });
+
+  /* ทดสอบในเครื่อง: localhost → โหมดทดลองอัตโนมัติ */
+  var isLocalHost = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  var q = isLocalHost ? 'local=1' : '';
+  if (isLocalHost) {
+    document.getElementById('localNote').hidden = false;
+    document.getElementById('goHost').href = 'host.html?' + q;
+    document.getElementById('goPlay').href = 'play.html?' + q;
+  }
+  var code = document.getElementById('roomCode'), joinBtn = document.getElementById('joinBtn');
+  code.addEventListener('input', function () { code.value = code.value.replace(/\D/g, '').slice(0, 6); joinBtn.disabled = code.value.length !== 6; });
+  document.getElementById('joinForm').addEventListener('submit', function (e) {
+    e.preventDefault(); if (code.value.length !== 6) return;
+    location.href = 'play.html?room=' + code.value + (q ? '&' + q : '');
+  });
+
+  /* การ์ดทีมโจร */
+  var CREW = [
+    ['🧤', 'Pickpocket', 'นักล้วงกระเป๋า', 'ขโมยได้มากขึ้น 5% ทุกครั้งที่ปล้นสำเร็จ', 'linear-gradient(135deg,#ff9a6b,#e8505b)'],
+    ['🔐', 'Safecracker', 'นักเจาะตู้เซฟ', 'โซนเขียวบนหน้าปัดกว้างขึ้นเกือบเท่าตัว', 'linear-gradient(135deg,#55d0ec,#1667b8)'],
+    ['🕵️', 'Mastermind', 'จอมวางแผน', 'เห็นว่าตู้ไหนติดล็อก ไม่เสียตั๋วฟรี', 'linear-gradient(135deg,#a98bf2,#5b3fc4)'],
+    ['🛡️', 'Guardian', 'ผู้พิทักษ์', 'เริ่มมีล็อก 1 อัน โดนขโมยแค่ครึ่งเดียว', 'linear-gradient(135deg,#5fd39b,#1f8a5f)']
+  ];
+  var AWARDS = [
+    ['🦹', 'Grand thief', 'จอมโจรผู้ยิ่งใหญ่', 'ขโมยเพชรรวมได้มากที่สุด', 'linear-gradient(135deg,#ffd45c,#e08a00)'],
+    ['🛡️', 'Vault keeper', 'ผู้พิทักษ์ตู้เซฟ', 'กันโจรด้วยล็อกได้บ่อยที่สุด', 'linear-gradient(135deg,#7fe0d4,#13867a)'],
+    ['🧠', 'Sharp mind', 'นักคิดแม่นที่สุด', 'ตอบถูกมากที่สุด', 'linear-gradient(135deg,#ff9fc8,#d14a8b)'],
+    ['🎈', 'Lucky target', 'ผู้ถูกปล้นมากที่สุด', 'รางวัลปลอบใจของคนที่ใคร ๆ ก็หมายตา', 'linear-gradient(135deg,#8fc8ff,#3a74d6)']
+  ];
+  function card(c, tag) {
+    return '<article class="cc"><div class="cov" style="background:' + c[4] + '"></div><span class="tg">' + tag + '</span><span class="emo">' + c[0] + '</span>' +
+      '<div class="gl"><div class="t">' + c[1] + '</div><div class="th">' + c[2] + '</div><div class="d">' + c[3] + '</div></div></article>';
+  }
+  document.getElementById('crewA').innerHTML = CREW.map(function (c) { return card(c, 'อาชีพ'); }).join('');
+  document.getElementById('crewB').innerHTML = AWARDS.map(function (c) { return card(c, 'รางวัล'); }).join('');
+})();
+</script>
+</body>
+</html>
