@@ -31,7 +31,7 @@ const Host = (() => {
     for (const [gid, key] of [['s-dur', 'dur'], ['s-qt', 'qt']]) {
       $(gid).querySelectorAll('button').forEach(b => b.onclick = () => { $(gid).querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cfg[key] = +b.dataset.v; SFX.play('pop'); });
     }
-    $('s-classes').innerHTML = Rules.CLASSES.map(c => `<div class="cl"><div class="e">${c.emoji}</div><b>${c.name}</b><small>${c.power}</small></div>`).join('');
+    $('s-classes').innerHTML = Rules.CLASSES.map(c => `<div class="cl"><div class="e">${c.emoji}</div><b>${c.name}</b><small>${c.power}</small><small class="sk">${c.skillEmoji} ${c.skill}: ${c.skillDesc}</small></div>`).join('');
     $('s-mode').innerHTML = Net.isLocal
       ? 'โหมดทดลองในเครื่อง: สแกน QR ไม่ได้ ให้เปิดลิงก์นักเรียนในแท็บใหม่ของเบราว์เซอร์นี้ (หลายแท็บ = หลายคน)'
       : 'ห้องออนไลน์: นักเรียนสแกน QR ด้วยมือถือ · <a href="host.html?local=1">ทดลองในเครื่องนี้แทน</a>';
@@ -100,7 +100,8 @@ const Host = (() => {
   }
   function blank(p) {
     const c = p.cls || pick(Rules.CLASSES).id;
-    return { n: p.name, c, d: 0, lk: c === 'guard' ? 1 : 0, sh: 0, tk: 0, cc: 0, cor: 0, ans: 0, stl: 0, hz: 0, ht: 0, lost: 0, rob: 0, blk: 0, bs: 0, lkb: 0 };
+    // hq = รอบปล้นที่ค้างอยู่ · gk = กุญแจผี · dbl = ข้อที่ยังได้เพชร 2 เท่า · vault = ตู้นิรภัยถึงเวลานี้ · sk = ใช้สกิลกี่ครั้ง
+    return { n: p.name, c, d: 0, sh: 0, hq: 0, gk: 0, dbl: 0, vault: 0, cor: 0, ans: 0, stl: 0, hz: 0, ht: 0, lost: 0, rob: 0, blk: 0, bs: 0, sk: 0 };
   }
 
   // ---------------- เริ่มเกม ----------------
@@ -174,7 +175,6 @@ const Host = (() => {
       try {
         if (a.type === 'ans') doAnswer(a);
         else if (a.type === 'heist') doHeist(a);
-        else if (a.type === 'lock') doLock(a);
       } catch (e) { console.error(e); }
       dirty = true;
     }
@@ -188,34 +188,83 @@ const Host = (() => {
     P.cor++;
     const streak = Math.max(0, a.streak | 0);
     P.bs = Math.max(P.bs, streak);
-    P.d += Rules.earn(+a.ms || 99999, streak, meta.qTime).total;
-    P.cc++;
-    if (P.cc >= TU.perTicket) { P.cc = 0; P.tk = Math.min(TU.maxTickets, P.tk + 1); }
+    const dbl = P.dbl > 0; if (dbl) P.dbl--;
+    P.d += Rules.earn(+a.ms || 99999, streak, meta.qTime, dbl).total;
+    // ถูกสะสมครบ 9 → สกิลทำงานก่อน แล้วครบ 3 → เปิดรอบปล้น (ข้อ 9, 18, 27 ได้ทั้งสองอย่าง)
+    if (P.cor % TU.perSkill === 0) useSkill(a.pid);
+    if (P.cor % TU.perHeist === 0) P.hq++;
     if (streak === 5 || streak === 10 || streak === 15) news({ e: '🔥', big: false, h: `<b>${esc(P.n)}</b> ตอบถูก ${streak} ข้อติด!` });
   }
 
+  // ---------------- สกิลอาชีพ (ทำงานเองทุก 9 ข้อ) ----------------
+  function useSkill(pid) {
+    const P = B[pid], c = Rules.cls(P.c), now = Net.now();
+    P.sk++;
+    let sub = '';
+    if (P.c === 'pick') {
+      const tops = ranked().filter(([id]) => id !== pid).slice(0, 3);
+      let got = 0; const hit = [];
+      for (const [id, V] of tops) {
+        if (now < V.sh || now < V.vault) continue;
+        const amt = Rules.cut(V.d, TU.grabRate * (V.c === 'guard' ? 0.5 : 1));
+        if (amt <= 0) continue;
+        V.d -= amt; V.lost += amt; V.rob++; P.d += amt; P.stl += amt; got += amt; totals.stolen += amt; hit.push(V.n);
+        msg(id, { k: 'grabbed', tn: P.n, amt });
+      }
+      sub = got ? `ล้วงจาก ${hit.join(', ')} รวม ${got} เม็ด` : 'แต่ผู้นำทุกคนมีโล่คุ้มกันอยู่!';
+      msg(pid, { k: 'skill', s: 'pick', amt: got, n: hit.length });
+      if (got) flashRows([pid]);
+    } else if (P.c === 'crack') {
+      P.gk = 1; sub = 'การปล้นรอบถัดไปสำเร็จแน่นอน'; msg(pid, { k: 'skill', s: 'crack' });
+    } else if (P.c === 'plan') {
+      P.dbl = TU.intelCount; sub = `ตอบถูก ${TU.intelCount} ข้อถัดไปได้เพชร 2 เท่า`; msg(pid, { k: 'skill', s: 'plan' });
+    } else {
+      P.vault = now + TU.vaultMs; sub = `${TU.vaultMs / 1000} วินาทีนี้ ใครมาปล้นจะเสียเพชรให้แทน`; msg(pid, { k: 'skill', s: 'guard' });
+    }
+    news({ e: c.skillEmoji, big: true, h: `<b>${esc(P.n)}</b> ใช้สกิล <b>${esc(c.skill)}</b>!`, sub });
+    cutin(P, c, sub);
+    SFX.play('skillready');
+  }
+
+  // ภาพตัดฉากเวลามีคนใช้สกิล (เข้าคิว ไม่ซ้อนกัน)
+  const ciQ = []; let ciBusy = false;
+  function cutin(P, c, sub) { ciQ.push({ P, c, sub }); if (!ciBusy) nextCutin(); }
+  function nextCutin() {
+    const x = ciQ.shift(); if (!x) { ciBusy = false; return; }
+    ciBusy = true;
+    const el = document.createElement('div'); el.className = 'ci';
+    el.style.setProperty('--tc', x.c.color);
+    el.innerHTML = `<div class="ci-band"></div><div class="ci-in"><div class="ci-em">${x.c.skillEmoji}</div><div><div class="ci-who">${x.c.emoji} ${esc(x.P.n)} · ${esc(x.c.name)}</div><div class="ci-name">${esc(x.c.skill)}!</div><div class="ci-sub">${esc(x.sub)}</div></div></div>`;
+    $('cutins').appendChild(el);
+    setTimeout(() => { el.remove(); nextCutin(); }, ciQ.length ? 1700 : 2400);
+  }
+
   function doHeist(a) {
-    const T = B[a.pid], V = B[a.target];
-    if (!T || T.tk <= 0 || !V || a.target === a.pid) return;
+    const T = B[a.pid];
+    if (!T || T.hq <= 0) return;
     const now = Net.now();
-    if (now < V.sh) { msg(a.pid, { k: 'shielded', vn: V.n }); return; } // ตั๋วไม่เสีย
-    T.tk--; T.ht++;
-    const hits = Math.max(0, Math.min(3, a.hits | 0));
-    if (hits < 2) {
+    const V = a.target && a.target !== a.pid ? B[a.target] : null;
+    if (!V) { T.hq--; msg(a.pid, { k: 'notarget' }); return; }
+    if (now < V.sh) { msg(a.pid, { k: 'shielded', vn: V.n }); return; } // รอบปล้นไม่เสีย มือถือเลือกใหม่
+    T.hq--; T.ht++;
+    if (now < V.vault) {                                   // เจอตู้นิรภัยของผู้พิทักษ์
+      const fine = Rules.cut(T.d, TU.vaultFine);
+      T.d -= fine; V.d += fine; V.blk++; totals.blocks++;
+      msg(a.pid, { k: 'vaulted', vn: V.n, amt: fine });
+      msg(a.target, { k: 'vaultwin', tn: T.n, amt: fine });
+      news({ e: '🏦', big: true, h: `<b>${esc(T.n)}</b> งัดตู้นิรภัยของ <b>${esc(V.n)}</b> ไม่เข้า!`, sub: fine ? `โดนปรับ เสียเพชรให้ ${fine} เม็ด` : 'กลับมือเปล่า' });
+      SFX.play('shield');
+      return;
+    }
+    const ghost = T.gk > 0; if (ghost) T.gk = 0;
+    const hits = ghost ? TU.pins : Math.max(0, Math.min(TU.pins, a.hits | 0));
+    if (!Rules.stealRate(hits, T.c, V.c, ghost)) {
       msg(a.pid, { k: 'fail', vn: V.n, hits });
       news({ e: '🚨', big: false, h: pick([`สัญญาณกันขโมยดัง! <b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> ไม่ทัน`, `<b>${esc(T.n)}</b> มือสั่น งัดตู้ <b>${esc(V.n)}</b> พลาด`]) });
       SFX.play('buzz');
       return;
     }
-    if (V.lk > 0) {
-      V.lk--; V.blk++; totals.blocks++;
-      msg(a.pid, { k: 'blocked', vn: V.n });
-      msg(a.target, { k: 'saved', tn: T.n });
-      news({ e: '🔒', big: true, h: pick([`<b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> ไม่เข้า!`, `ตู้ของ <b>${esc(V.n)}</b> ล็อกแน่นหนา <b>${esc(T.n)}</b> กลับมือเปล่า`]), sub: 'ล็อกตู้เซฟช่วยไว้ได้ทันเวลา' });
-      SFX.play('shield');
-      return;
-    }
-    const amt = Rules.stealAmount(V.d, hits, T.c, V.c);
+    const amt = Rules.stealAmount(V.d, hits, T.c, V.c, ghost);
     if (amt <= 0) {
       msg(a.pid, { k: 'empty', vn: V.n });
       news({ e: '🕸️', big: false, h: `<b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> สำเร็จ แต่ตู้ว่างเปล่า!` });
@@ -223,24 +272,15 @@ const Host = (() => {
     }
     V.d -= amt; T.d += amt; T.stl += amt; T.hz++; V.lost += amt; V.rob++; V.sh = now + TU.protectMs;
     totals.stolen += amt; totals.heists++;
-    msg(a.pid, { k: 'stole', vn: V.n, amt, hits });
+    msg(a.pid, { k: 'stole', vn: V.n, amt, hits, ghost });
     msg(a.target, { k: 'robbed', tn: T.n, amt });
     const tc = Rules.cls(T.c);
     news({ e: tc.emoji, big: true, flash: [a.pid, a.target], h: pick([
       `<b>${esc(T.n)}</b> ฉกเพชร ${amt} เม็ดจาก <b>${esc(V.n)}</b>!`,
       `ตู้เซฟของ <b>${esc(V.n)}</b> ถูกงัด! หายไป ${amt} เม็ด`,
       `<b>${esc(T.n)}</b> ${tc.short}! ขนเพชรของ <b>${esc(V.n)}</b> ไป ${amt} เม็ด`,
-    ]), sub: hits === 3 ? 'งัดสลักครบทั้ง 3 ตัว' : 'งัดได้ 2 จาก 3 สลัก' });
+    ]), sub: ghost ? '🗝️ ใช้กุญแจผีเปิดตู้' : hits >= TU.pins ? 'งัดสลักครบทุกตัว' : hits ? `งัดได้ ${hits} จาก ${TU.pins} สลัก` : '🕵️ แผนสำรองของจอมวางแผน' });
     SFX.play('break');
-  }
-
-  function doLock(a) {
-    const P = B[a.pid];
-    const cost = Rules.lockCost();
-    if (P.lk > 0 || P.d < cost) { msg(a.pid, { k: 'nolock' }); return; }
-    P.d -= cost; P.lk = 1; P.lkb++;
-    msg(a.pid, { k: 'locked' });
-    news({ e: '🔒', big: false, h: `<b>${esc(P.n)}</b> ติดตั้งล็อกตู้เซฟ` });
   }
 
   // ---------------- ข่าว ----------------
@@ -308,21 +348,21 @@ const Host = (() => {
   function computeResults() {
     const list = ranked();
     const personal = {};
-    list.forEach(([pid, P], i) => { personal[pid] = { rank: i + 1, name: P.n, c: P.c, d: P.d, cor: P.cor, ans: P.ans, stl: P.stl, hz: P.hz, ht: P.ht, rob: P.rob, lost: P.lost, blk: P.blk, bs: P.bs, lkb: P.lkb, awards: [] }; });
+    list.forEach(([pid, P], i) => { personal[pid] = { rank: i + 1, name: P.n, c: P.c, d: P.d, cor: P.cor, ans: P.ans, stl: P.stl, hz: P.hz, ht: P.ht, rob: P.rob, lost: P.lost, blk: P.blk, bs: P.bs, sk: P.sk, awards: [] }; });
     const best = (key, tie) => { let b = null; for (const [pid, P] of list) { if (!(P[key] > 0)) continue; if (!b || P[key] > B[b][key] || (P[key] === B[b][key] && tie && tie(P, B[b]) > 0)) b = pid; } return b; };
     const awards = [];
     const add = (pid, a, value) => { if (!pid) return; const x = Object.assign({ pid, pname: B[pid].n, value }, a); awards.push(x); personal[pid].awards.push(x); };
     const acc = (P) => P.ans ? P.cor / P.ans : 0;
     const t1 = best('stl'); add(t1, { emoji: '🦹', name: 'จอมโจรผู้ยิ่งใหญ่', desc: 'ขโมยเพชรได้มากที่สุดในห้อง' }, t1 && `ขโมยได้ ${B[t1].stl} เม็ด`);
-    const t2 = best('blk'); add(t2, { emoji: '🛡️', name: 'ผู้พิทักษ์ตู้เซฟ', desc: 'ล็อกตู้กันโจรได้มากที่สุด' }, t2 && `กันได้ ${B[t2].blk} ครั้ง`);
+    const t2 = best('blk'); add(t2, { emoji: '🏦', name: 'ผู้พิทักษ์ตู้เซฟ', desc: 'ตู้นิรภัยกันโจรได้มากที่สุด' }, t2 && `กันได้ ${B[t2].blk} ครั้ง`);
     const t3 = best('cor', (a, b) => acc(a) - acc(b)); add(t3, { emoji: '🧠', name: 'นักคิดแม่นที่สุด', desc: 'ตอบคำถามถูกมากที่สุด' }, t3 && `ถูก ${B[t3].cor} จาก ${B[t3].ans} ข้อ`);
     const t4 = best('rob'); add(t4, { emoji: '🎈', name: 'ผู้ถูกปล้นมากที่สุด', desc: 'รางวัลปลอบใจ ตู้นี้เป็นที่หมายปองของทุกคน' }, t4 && `โดนปล้น ${B[t4].rob} ครั้ง`);
     for (const pid in personal) {
       const p = personal[pid]; if (p.awards.length) continue;
       p.badge = p.hz > 0 ? { emoji: '🧤', name: 'มือไว', desc: `ปล้นสำเร็จ ${p.hz} ครั้ง` }
-        : p.blk > 0 ? { emoji: '🔒', name: 'ตู้เหล็ก', desc: `ล็อกกันโจรได้ ${p.blk} ครั้ง` }
+        : p.blk > 0 ? { emoji: '🔒', name: 'ตู้เหล็ก', desc: `ตู้นิรภัยกันโจรได้ ${p.blk} ครั้ง` }
+        : p.sk > 0 ? { emoji: '⚡', name: 'นักใช้สกิล', desc: `ปลดสกิลอาชีพได้ ${p.sk} ครั้ง` }
         : p.cor >= 5 ? { emoji: '📚', name: 'หัวไว', desc: `ตอบถูก ${p.cor} ข้อ` }
-        : p.lkb > 0 ? { emoji: '🧰', name: 'รอบคอบ', desc: 'รู้จักป้องกันตู้ของตัวเอง' }
         : { emoji: '💎', name: 'ผู้ร่วมปฏิบัติการ', desc: 'ขอบคุณที่ร่วมภารกิจครั้งนี้' };
     }
     return { at: Net.now(), podium: list.slice(0, 3).map(([pid]) => pid), awards, personal, total: list.length };
