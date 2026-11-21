@@ -43,6 +43,16 @@
   @keyframes glow { 50% { box-shadow: 0 0 0 6px rgba(232,80,91,.2); } }
   .dots { display: flex; gap: 5px; justify-content: center; } .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); } .dots i.on { background: var(--gold); }
   .act.ready .dots i { background: rgba(255,255,255,.4); } .act.ready .dots i.on { background: var(--surface); }
+  .act { cursor: default; }
+  .skbar { display: block; height: 8px; border-radius: 99px; background: var(--bg2); overflow: hidden; margin: 2px 6px; } .skbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), #ffd23f); border-radius: 99px; transition: width .4s; }
+  .act.full { border-color: var(--gold-line); background: var(--gold-soft); }
+  .fx { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .fx:empty { display: none; }
+  .fx span { font: 600 .82rem/1 var(--display); padding: 7px 10px; border-radius: 99px; background: var(--gold-soft); border: 1px solid var(--gold-line); color: var(--gold-ink); }
+  .pbar { height: 8px; background: var(--bg2); border-radius: 99px; overflow: hidden; margin-bottom: 12px; } .pbar i { display: block; height: 100%; width: 100%; background: var(--alarm); border-radius: 99px; }
+  /* ภาพสกิลบนมือถือ */
+  .skillfx { position: fixed; inset: 0; z-index: 95; display: none; align-items: center; justify-content: center; text-align: center; padding: 24px; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--tc, #f4b400) 45%, transparent), rgba(8,11,26,.96) 70%); }
+  .skillfx.on { display: flex; }
+  .skillfx .em { font-size: 6rem; } .skillfx h2 { font-size: 2.4rem; margin-top: 8px; } .skillfx p { font: 600 1.1rem/1.45 var(--display); color: #dfe4f3; margin: 10px 0 0; }
 
   /* คำถาม */
   .qcard { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--shadow); }
@@ -128,9 +138,10 @@
   </div>
   <div class="top3" id="p-top3"></div>
   <div class="acts">
-    <button class="act" id="btn-heist" disabled>🦹 ปล้น!<small id="tk-text">ตอบถูก 3 ข้อได้ตั๋ว</small><span class="dots" id="tk-dots"><i></i><i></i><i></i></span></button>
-    <button class="act" id="btn-lock" disabled>🔒 ล็อกตู้<small id="lk-text">20 เพชร กันได้ 1 ครั้ง</small></button>
+    <div class="act" id="pg-heist">🦹 ปล้นอัตโนมัติ<span class="dots" id="hz-dots"><i></i><i></i><i></i></span><small id="hz-text">ตอบถูกอีก 3 ข้อ</small></div>
+    <div class="act" id="pg-skill"><span id="sk-name">⚡ สกิล</span><span class="skbar"><i id="sk-bar"></i></span><small id="sk-text">ตอบถูกอีก 9 ข้อ</small></div>
   </div>
+  <div class="fx" id="p-fx"></div>
   <div class="qcard" id="qcard">
     <div class="qbar"><i id="p-qtime"></i></div>
     <div class="qt" id="p-qt">เตรียมตัว…</div>
@@ -150,15 +161,16 @@
 <!-- แผงปล้น -->
 <div class="sheet" id="heist"><div class="m">
   <div id="h-pick">
-    <div class="row" style="margin-bottom:12px"><h2 style="font-size:1.5rem">เลือกตู้ที่จะงัด</h2><span class="grow"></span><button class="btn btn-sm" id="h-cancel">ยกเลิก</button></div>
+    <div class="row" style="margin-bottom:10px"><h2 style="font-size:1.5rem">🦹 ถึงเวลาปล้น! เลือกตู้</h2><span class="grow"></span><span class="tag tag-gold"><b id="h-pleft">6</b>&nbsp;วิ</span></div>
+    <div class="pbar"><i id="h-ptime"></i></div>
     <p class="muted" id="h-hint" style="margin:0 0 12px"></p>
     <div class="stack" id="h-list"></div>
   </div>
   <div id="h-crack" style="display:none;text-align:center">
     <h2 style="font-size:1.4rem">งัดตู้ของ <span id="h-vname"></span></h2>
-    <p class="muted" style="margin:6px 0 0">แตะเมื่อเข็มอยู่ในโซนเขียว งัดให้ได้อย่างน้อย 2 สลัก</p>
+    <p class="muted" style="margin:6px 0 0">แตะเมื่อเข็มอยู่ในโซนเขียว 2 ครั้ง ภายใน 5 วินาที</p>
     <div class="dial-wrap"><canvas id="dial" width="640" height="640"></canvas></div>
-    <div class="pins" id="pins"><span>🔩</span><span>🔩</span><span>🔩</span></div>
+    <div class="pins" id="pins"><span>🔩</span><span>🔩</span></div>
     <button class="btn btn-alarm btn-lg btn-block" id="h-tap" style="margin-top:14px">งัด!</button>
   </div>
   <div id="h-result" class="result" style="display:none">
@@ -167,6 +179,7 @@
   </div>
 </div></div>
 
+<div class="skillfx" id="skillfx"><div><div class="em" id="sf-em">⚡</div><div class="label" style="color:#ffd36b">สกิลอาชีพทำงาน!</div><h2 id="sf-name"></h2><p id="sf-desc"></p></div></div>
 <div class="alert" id="alert"><div class="e" id="al-e">😱</div><div id="al-t"></div></div>
 <div class="gain" id="gain"></div>
 <div class="overlay" id="p-countdown"><div class="num" id="p-cd">3</div></div>
