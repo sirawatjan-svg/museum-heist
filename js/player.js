@@ -10,6 +10,7 @@ const Player = (() => {
   let code = null, R = null, pid = null, name = '', meta = null, me = null, board = {}, questions = [], players = {};
   let unsubs = [], phase = null, round = 0;
   let order = [], qi = 0, qStart = 0, locked = true, streak = 0, inHeist = false, nextT = null;
+  let myCor = 0, pending = 0; // ตอบถูกสะสม (นับในเครื่องให้ตอบสนองทันที) · รอบปล้นที่ค้าง
   const store = Net.isLocal ? sessionStorage : localStorage; // โหมดทดสอบ: แต่ละแท็บเป็นคนละคน
   const KEY = () => 'mh-pid-' + code;
 
@@ -68,10 +69,10 @@ const Player = (() => {
   // ---------------- เลือกอาชีพ ----------------
   function renderClasses() {
     const mine = players[pid] && players[pid].cls;
-    $('cls-grid').innerHTML = Rules.CLASSES.map(c => `<button class="cls ${mine === c.id ? 'on' : ''}" data-c="${c.id}" style="--cc:${c.color}"><div class="e">${c.emoji}</div><b>${c.name}</b><small>${c.power}</small></button>`).join('');
+    $('cls-grid').innerHTML = Rules.CLASSES.map(c => `<button class="cls ${mine === c.id ? 'on' : ''}" data-c="${c.id}" style="--cc:${c.color}"><div class="e">${c.emoji}</div><b>${c.name}</b><small>${c.power}</small><small style="color:var(--gold-ink)">${c.skillEmoji} ${c.skill}</small></button>`).join('');
     $('cls-grid').querySelectorAll('.cls').forEach(b => b.onclick = () => { if (phase !== 'lobby') return; Net.update(R + '/players/' + pid, { cls: b.dataset.c }); SFX.play('pop'); vib(30); });
     const c = mine ? Rules.cls(mine) : null;
-    $('lb-pick').innerHTML = c ? `${c.emoji} คุณคือ <b>${c.name}</b><br><span class="muted" style="font-size:.92rem">${c.power}</span>` : 'ยังไม่ได้เลือก (ถ้าไม่เลือกจะได้แบบสุ่ม)';
+    $('lb-pick').innerHTML = c ? `${c.emoji} คุณคือ <b>${c.name}</b><br><span class="muted" style="font-size:.92rem">${c.power}</span><br><span style="font-size:.92rem;color:var(--gold-ink)">${c.skillEmoji} สกิล ${c.skill}: ${c.skillDesc}</span>` : 'ยังไม่ได้เลือก (ถ้าไม่เลือกจะได้แบบสุ่ม)';
   }
 
   // ---------------- เล่น ----------------
@@ -83,8 +84,9 @@ const Player = (() => {
   async function startPlay() {
     if (!questions.length) questions = (await Net.once(R + '/questions')) || [];
     order = seededShuffle(questions.map((_, i) => i), pid + ':' + round);
-    qi = 0; show('v-play'); renderHud();
-    $('btn-heist').onclick = openHeist; $('btn-lock').onclick = buyLock;
+    qi = 0; show('v-play');
+    const P0 = myB(); myCor = P0 && meta.startAt && Net.now() > meta.startAt ? (P0.cor || 0) : 0; pending = P0 && myCor ? (P0.hq || 0) : 0;
+    renderHud();
     const ov = $('p-countdown');
     const tick = () => {
       const left = meta.startAt - Net.now();
@@ -104,6 +106,7 @@ const Player = (() => {
     $('p-time').textContent = 'เหลือ ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
     $('p-time').style.color = sec <= 30 ? 'var(--bad)' : '';
     if (sec <= 0) stopQ();
+    renderProgress();
   }
 
   let lastD = null;
@@ -120,21 +123,31 @@ const Player = (() => {
     $('p-dia').innerHTML = P.d + gem;
     if (lastD != null && P.d !== lastD) { $('p-dia').classList.remove('bump'); void $('p-dia').offsetWidth; $('p-dia').classList.add('bump'); }
     lastD = P.d;
-    // ตั๋วปล้น
-    const hb = $('btn-heist');
-    hb.disabled = !(P.tk > 0) || inHeist;
-    hb.classList.toggle('ready', P.tk > 0);
-    $('tk-text').textContent = P.tk > 0 ? `มีตั๋ว ${P.tk} ใบ แตะเลย!` : `ตอบถูกอีก ${TU.perTicket - P.cc} ข้อได้ตั๋ว`;
-    $('tk-dots').innerHTML = Array.from({ length: TU.perTicket }, (_, i) => `<i class="${P.tk > 0 || i < P.cc ? 'on' : ''}"></i>`).join('');
-    // ล็อก
-    const lb = $('btn-lock'), cost = Rules.lockCost();
-    lb.classList.toggle('locked', P.lk > 0);
-    if (P.lk > 0) { lb.disabled = true; lb.firstChild.textContent = '🔒 ล็อกอยู่ '; $('lk-text').textContent = 'กันการปล้นครั้งถัดไปได้'; }
-    else { lb.disabled = P.d < cost; lb.firstChild.textContent = '🔓 ล็อกตู้ '; $('lk-text').textContent = `${cost} เพชร กันได้ 1 ครั้ง`; }
+    renderProgress();
+  }
+  // ความคืบหน้า: ปล้นอัตโนมัติ (ทุก 3 ข้อ) + สกิล (ทุก 9 ข้อ) + เอฟเฟกต์ที่กำลังทำงาน
+  function renderProgress() {
+    const P = myB(); if (!P) return;
+    const c = Rules.cls(P.c);
+    const h = myCor % TU.perHeist, s = myCor % TU.perSkill;
+    $('hz-dots').innerHTML = Array.from({ length: TU.perHeist }, (_, i) => `<i class="${i < h ? 'on' : ''}"></i>`).join('');
+    $('hz-text').textContent = pending > 0 ? `รอปล้น ${pending} รอบ (รอเป้าหมดโล่)` : h === TU.perHeist - 1 ? 'อีก 1 ข้อ ได้ปล้น!' : `ตอบถูกอีก ${TU.perHeist - h} ข้อ`;
+    $('pg-heist').classList.toggle('full', pending > 0 || h === TU.perHeist - 1);
+    $('sk-name').textContent = `${c.skillEmoji} ${c.skill}`;
+    $('sk-bar').style.width = (s / TU.perSkill * 100) + '%';
+    $('sk-text').textContent = s === TU.perSkill - 1 ? 'อีก 1 ข้อ สกิลทำงาน!' : `ตอบถูกอีก ${TU.perSkill - s} ข้อ`;
+    $('pg-skill').classList.toggle('full', s >= TU.perSkill - 2);
+    const now = Net.now(), fx = [];
+    if (P.gk > 0) fx.push('🗝️ กุญแจผีพร้อม: ปล้นครั้งหน้าสำเร็จแน่');
+    if (P.dbl > 0) fx.push(`📂 เพชร ×2 อีก ${P.dbl} ข้อ`);
+    if (now < P.vault) fx.push(`🏦 ตู้นิรภัย ${Math.ceil((P.vault - now) / 1000)} วิ`);
+    if (now < P.sh) fx.push(`🛡️ โล่คุ้มกัน ${Math.ceil((P.sh - now) / 1000)} วิ`);
+    $('p-fx').innerHTML = fx.map(t => `<span>${t}</span>`).join('');
   }
 
   function nextQuestion() {
     if (phase !== 'play' || gameLeft() <= 0 || inHeist) return;
+    if (pending > 0 && eligible() > 0) { openHeist(); return; }   // ครบ 3 ข้อ → เด้งหน้าปล้นเอง (ถ้าทุกคนมีโล่ เก็บรอบปล้นไว้ก่อน)
     if (!order.length) return;
     const q = questions[order[qi % order.length]]; qi++;
     locked = false; qStart = Date.now();
@@ -163,12 +176,14 @@ const Player = (() => {
     const ch = $('p-choices').children;
     for (let k = 0; k < 4; k++) ch[k].classList.add(k === q.correct ? 'ok' : k === i ? 'no' : 'dim');
     if (ok) {
-      streak++;
-      const g = Rules.earn(ms, streak, meta.qTime);
+      streak++; myCor++;
+      const P = myB();
+      const g = Rules.earn(ms, streak, meta.qTime, P && P.dbl > 0);
       SFX.play('correct'); vib(40);
-      const el = $('gain'); el.innerHTML = '+' + g.total + gem; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+      const el = $('gain'); el.innerHTML = '+' + g.total + gem + (g.double ? ' ×2' : ''); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
       if (g.streak) toast(`🔥 ถูกติดกัน ${streak} ข้อ โบนัส +${g.streak}`, 1200);
-      const P = myB(); if (P && P.cc + 1 >= TU.perTicket && P.tk < TU.maxTickets) setTimeout(() => { SFX.play('skillready'); vib([50, 30, 120]); toast('🎟️ ได้ตั๋วปล้นแล้ว! แตะปุ่ม "ปล้น!"'); }, 500);
+      if (myCor % TU.perHeist === 0) pending++;
+      renderProgress();
     } else {
       streak = 0; SFX.play('wrong'); vib([30, 30, 30]);
       if (q.explain) $('p-explain').textContent = '💡 ' + q.explain;
@@ -178,22 +193,55 @@ const Player = (() => {
     clearTimeout(nextT); nextT = setTimeout(nextQuestion, ok ? 800 : 1900);
   }
 
-  function buyLock() {
-    const P = myB(); if (!P || P.lk > 0 || P.d < Rules.lockCost()) return;
-    $('btn-lock').disabled = true;
-    Net.push(R + '/acts', { pid, type: 'lock', t: Net.now() });
-  }
-
-  // ---------------- ปล้น ----------------
-  let target = null, crack = null;
+  // ---------------- ปล้น (เด้งเองทุก 3 ข้อ) ----------------
+  let target = null, crack = null, pickT = null, pickEnd = 0;
   function openHeist() {
-    const P = myB(); if (!P || P.tk <= 0 || inHeist) return;
-    inHeist = true; stopQ(); clearTimeout(nextT); SFX.play('whoosh');
+    const P = myB(); if (!P || inHeist || pending <= 0) return;
+    inHeist = true; stopQ(); clearTimeout(nextT); SFX.play('whoosh'); vib([60, 40, 60]);
     $('heist').classList.add('on'); $('h-pick').style.display = ''; $('h-crack').style.display = 'none'; $('h-result').style.display = 'none';
-    $('h-cancel').onclick = () => { closeHeist(); nextQuestion(); };
-    const c = P.c;
-    $('h-hint').textContent = c === 'plan' ? '🕵️ จอมวางแผนเห็นว่าตู้ไหนติดล็อก เลือกตู้ที่ไม่มีล็อกจะได้เพชรแน่นอน' : 'บางตู้อาจติดล็อกไว้ ถ้าโชคร้ายจะเสียตั๋วฟรี';
+    $('h-hint').textContent = P.gk > 0 ? '🗝️ คุณมีกุญแจผี เลือกตู้ไหนก็เปิดได้แน่นอน ได้ 35%' : 'ตู้ที่มีเพชรเยอะ ขโมยได้เยอะ · ถ้าไม่เลือก ระบบจะสุ่มให้';
     candidates = null; renderTargets();
+    clearInterval(pickT); pickEnd = performance.now() + TU.pickMs;
+    const tickPick = () => {
+      const left = pickEnd - performance.now();
+      $('h-ptime').style.width = Math.max(0, left / TU.pickMs * 100) + '%';
+      $('h-pleft').textContent = Math.max(0, Math.ceil(left / 1000));
+      if (left <= 0) { clearInterval(pickT); pickT = null; autoPick(); }
+    };
+    tickPick(); pickT = setInterval(tickPick, 100);
+  }
+  function autoPick() {
+    if (!inHeist || target) return;
+    const btns = [...$('h-list').querySelectorAll('.tgt:not([disabled])')];
+    const safe = btns.filter(b => !b.dataset.vault);           // สุ่มเลี่ยงตู้นิรภัยถ้ามีทางเลือก
+    const pool = safe.length ? safe : btns;
+    if (!pool.length) { noTarget(); return; }
+    toast('⏱️ หมดเวลาเลือก ระบบสุ่มเป้าให้', 1500);
+    chooseTarget(pool[Math.floor(Math.random() * pool.length)].dataset.id);
+  }
+  // เป้าที่ปล้นได้ตอนนี้ (ไม่นับคนที่มีโล่)
+  function eligible() { const now = Net.now(); return Object.entries(board).filter(([id, x]) => id !== pid && now >= (x.sh || 0)).length; }
+  function noTarget() {
+    clearInterval(pickT); pickT = null;   // รอบปล้นยังอยู่ ได้ปล้นข้อต่อไปเมื่อมีเป้าว่าง
+    closeHeist(); toast('ทุกคนมีโล่อยู่ เก็บรอบปล้นไว้ก่อน', 1600); nextQuestion();
+  }
+  function chooseTarget(id) {
+    if (target) return;
+    clearInterval(pickT); pickT = null; pending = Math.max(0, pending - 1);
+    const P = myB();
+    if (P && P.gk > 0) ghostHeist(id); else startCrack(id);
+  }
+  function ghostHeist(id) {
+    target = id; const V = board[id]; if (!V) return;
+    crack = { done: true, hits: TU.pins };
+    $('h-pick').style.display = 'none'; $('h-result').style.display = '';
+    $('r-e').textContent = '🗝️'; $('r-e').className = 'big pop'; $('r-h').textContent = 'กุญแจผีเปิดตู้…'; $('r-p').textContent = 'ตู้ของ ' + V.n;
+    SFX.play('lock');
+    gotResult = false; crackEndAt = performance.now();
+    $('r-back').onclick = () => { closeHeist(); nextQuestion(); };
+    Net.push(R + '/acts', { pid, type: 'heist', target, hits: TU.pins, t: Net.now() });
+    clearTimeout(resultWait);
+    resultWait = setTimeout(() => { if (!gotResult) showResult('🤔', 'ยังไม่ได้รับผล', 'ดูผลบนจอหน้าห้องได้เลย'); }, 7000);
   }
   let candidates = null;
   function renderTargets() {
@@ -209,14 +257,14 @@ const Player = (() => {
     const rows = candidates.map(id => [id, board[id]]).filter(x => x[1]).sort((a, b) => b[1].d - a[1].d);
     if (!rows.length) { $('h-list').innerHTML = '<p class="muted">ยังไม่มีเป้าหมายในห้อง</p>'; return; }
     $('h-list').innerHTML = rows.map(([id, x]) => {
-      const sh = now < x.sh, c = Rules.cls(x.c);
+      const sh = now < x.sh, vt = now < x.vault, c = Rules.cls(x.c);
       const tags = [];
       if (sh) tags.push(`🛡️ เพิ่งโดนปล้น รออีก ${Math.ceil((x.sh - now) / 1000)} วิ`);
-      if (P.c === 'plan') tags.push(x.lk > 0 ? '🔒 ติดล็อก' : '🔓 ไม่มีล็อก');
-      if (x.c === 'guard') tags.push('🛡️ ผู้พิทักษ์ โดนขโมยครึ่งเดียว');
-      return `<button class="tgt" data-id="${id}" ${sh ? 'disabled' : ''}><span class="e">${c.emoji}</span><span><b>${esc(x.n)}</b><small>${tags.join(' · ') || c.name}</small></span><span class="d">${x.d}${gem}</span></button>`;
+      if (vt) tags.push('🏦 เปิดตู้นิรภัยอยู่ ปล้นแล้วเสียเพชร!');
+      if (x.c === 'guard') tags.push('🛡️ โดนขโมยครึ่งเดียว');
+      return `<button class="tgt" data-id="${id}" ${vt ? 'data-vault="1"' : ''} ${sh ? 'disabled' : ''}><span class="e">${c.emoji}</span><span><b>${esc(x.n)}</b><small>${tags.join(' · ') || c.name}</small></span><span class="d">${x.d}${gem}</span></button>`;
     }).join('');
-    $('h-list').querySelectorAll('.tgt').forEach(b => b.onclick = () => startCrack(b.dataset.id));
+    $('h-list').querySelectorAll('.tgt').forEach(b => b.onclick = () => chooseTarget(b.dataset.id));
   }
   function startCrack(id) {
     target = id; const V = board[id]; if (!V) return;
@@ -225,11 +273,14 @@ const Player = (() => {
     $('h-vname').textContent = V.n;
     const pins = $('pins').children; for (const p of pins) { p.className = ''; p.textContent = '🔩'; }
     const zone = Rules.zoneFor(myB().c) * Math.PI * 2;
-    crack = { i: 0, hits: 0, t0: performance.now(), ang: 0, dir: 1, speed: Math.PI * 2 / TU.needleMs, zones: [0, 1, 2].map(k => ({ at: Math.random() * Math.PI * 2, w: zone * [1, 0.85, 0.7][k] })), done: false, last: performance.now() };
+    crack = { i: 0, hits: 0, t0: performance.now(), ang: 0, dir: 1, speed: Math.PI * 2 / TU.needleMs, zones: Array.from({ length: TU.pins }, (_, k) => ({ at: Math.random() * Math.PI * 2, w: zone * [1, 0.85, 0.7][k] })), done: false, last: performance.now() };
     $('h-tap').disabled = false;
     $('h-tap').onclick = tapCrack;
     $('dial').onpointerdown = (e) => { e.preventDefault(); tapCrack(); };
     requestAnimationFrame(drawDial);
+    // กันค้าง: ถ้าเฟรมภาพหยุด (เช่นสลับแอป) ยังจบด่านเองตามเวลา
+    const my = crack;
+    setTimeout(() => { if (crack !== my || my.done) return; while (my.i < TU.pins) { const pin = $('pins').children[my.i]; pin.className = 'miss'; pin.textContent = '⌛'; my.i++; } finishCrack(); }, TU.crackMs + 250);
   }
   const norm = (a) => ((a % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
   function inZone(a, z) { let d = Math.abs(norm(a) - norm(z.at)); d = Math.min(d, Math.PI * 2 - d); return d <= z.w / 2; }
@@ -240,7 +291,7 @@ const Player = (() => {
     pin.className = ok ? 'hit pop' : 'miss shake'; pin.textContent = ok ? '✅' : '❌';
     if (ok) { crack.hits++; SFX.play('lock'); vib(40); } else { SFX.play('wrong'); vib([20, 20, 20]); }
     crack.i++; crack.dir *= -1; crack.speed *= 1.12;
-    if (crack.i >= 3) finishCrack();
+    if (crack.i >= TU.pins) finishCrack();
   }
   function drawDial(now) {
     if (!crack) return;
@@ -248,7 +299,7 @@ const Player = (() => {
     const dt = Math.min(50, now - crack.last); crack.last = now;
     if (!crack.done) crack.ang += crack.dir * crack.speed * dt;
     const leftMs = TU.crackMs - (now - crack.t0);
-    if (!crack.done && leftMs <= 0) { while (crack.i < 3) { const pin = $('pins').children[crack.i]; pin.className = 'miss'; pin.textContent = '⌛'; crack.i++; } finishCrack(); }
+    if (!crack.done && leftMs <= 0) { while (crack.i < TU.pins) { const pin = $('pins').children[crack.i]; pin.className = 'miss'; pin.textContent = '⌛'; crack.i++; } finishCrack(); }
     c.clearRect(0, 0, W, W);
     // ตัวตู้
     c.fillStyle = '#1b2348'; c.beginPath(); c.arc(cx, cx, r + 46, 0, Math.PI * 2); c.fill();
@@ -258,13 +309,13 @@ const Player = (() => {
     c.strokeStyle = '#3a4790'; c.lineWidth = 4;
     for (let k = 0; k < 40; k++) { const a = k / 40 * Math.PI * 2; const r1 = r - (k % 5 ? 14 : 28); c.beginPath(); c.moveTo(cx + Math.cos(a) * r1, cx + Math.sin(a) * r1); c.lineTo(cx + Math.cos(a) * r, cx + Math.sin(a) * r); c.stroke(); }
     // โซนเขียว
-    if (crack.i < 3) {
+    if (crack.i < TU.pins) {
       const z = crack.zones[crack.i];
       c.strokeStyle = '#3ddc97'; c.lineWidth = 34; c.lineCap = 'round';
       c.beginPath(); c.arc(cx, cx, r - 30, z.at - z.w / 2, z.at + z.w / 2); c.stroke(); c.lineCap = 'butt';
     }
     // เข็ม
-    const hot = crack.i < 3 && inZone(crack.ang, crack.zones[crack.i]);
+    const hot = crack.i < TU.pins && inZone(crack.ang, crack.zones[crack.i]);
     c.strokeStyle = hot ? '#3ddc97' : '#f2f4fb'; c.lineWidth = 12; c.lineCap = 'round';
     c.beginPath(); c.moveTo(cx, cx); c.lineTo(cx + Math.cos(crack.ang) * (r - 10), cx + Math.sin(crack.ang) * (r - 10)); c.stroke(); c.lineCap = 'butt';
     c.fillStyle = '#f2f4fb'; c.beginPath(); c.arc(cx, cx, 30, 0, Math.PI * 2); c.fill();
@@ -300,8 +351,21 @@ const Player = (() => {
     if (!$('heist').classList.contains('on')) { toast(e + ' ' + h, 2600); return; }
     $('h-crack').style.display = 'none'; $('h-result').style.display = '';
     $('r-e').textContent = e; $('r-e').className = 'big pop'; $('r-h').textContent = h; $('r-p').textContent = p || '';
+    // กลับไปตอบคำถามเองหลังเห็นผล (ไม่ต้องกดปุ่ม)
+    clearTimeout(backT); backT = setTimeout(() => { if (inHeist && $('h-result').style.display !== 'none') { closeHeist(); nextQuestion(); } }, 2400);
   }
-  function closeHeist() { inHeist = false; crack = null; target = null; $('heist').classList.remove('on'); renderHud(); }
+  let backT = null;
+  function closeHeist() { inHeist = false; crack = null; target = null; clearInterval(pickT); pickT = null; clearTimeout(backT); $('heist').classList.remove('on'); renderHud(); }
+
+  function skillFx(s, extra) {
+    const c = Rules.cls(s);
+    const el = $('skillfx'); el.style.setProperty('--tc', c.color);
+    $('sf-em').textContent = c.skillEmoji; $('sf-name').textContent = c.skill;
+    $('sf-desc').textContent = extra || c.skillDesc;
+    el.classList.add('on'); SFX.play('skillready'); vib([60, 40, 60, 40, 160]);
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200);
+    el.onclick = () => el.classList.remove('on');
+  }
 
   // ---------------- ข้อความจากจอครู ----------------
   const handled = new Set();
@@ -311,15 +375,16 @@ const Player = (() => {
       if (handled.has(key)) continue; handled.add(key);
       Net.remove(R + '/msg/' + pid + '/' + key);
       const m = v[key];
-      if (m.k === 'stole') { showResult('💎', `ได้มา ${m.amt} เม็ด!`, `งัดตู้ของ ${m.vn} สำเร็จ ${m.hits}/3 สลัก`); SFX.play('win'); vib([60, 40, 160]); }
-      else if (m.k === 'fail') { showResult('🚨', 'สัญญาณกันขโมยดัง!', `งัดได้แค่ ${m.hits}/3 สลัก ต้องได้อย่างน้อย 2`); SFX.play('buzz'); vib([200]); }
-      else if (m.k === 'blocked') { showResult('🔒', 'ตู้ติดล็อก!', `${m.vn} ล็อกตู้ไว้ ตั๋วใบนี้เสียไป`); SFX.play('shield'); }
+      if (m.k === 'stole') { showResult('💎', `ได้มา ${m.amt} เม็ด!`, m.ghost ? `กุญแจผีเปิดตู้ของ ${m.vn}` : m.hits >= TU.pins ? `งัดตู้ของ ${m.vn} ครบทุกสลัก` : m.hits ? `งัดตู้ของ ${m.vn} ได้ ${m.hits}/${TU.pins} สลัก` : `แผนสำรองของจอมวางแผน (ตู้ของ ${m.vn})`); SFX.play('win'); vib([60, 40, 160]); }
+      else if (m.k === 'fail') { showResult('🚨', 'สัญญาณกันขโมยดัง!', 'งัดไม่ได้สักสลัก รอบหน้าเอาใหม่'); SFX.play('buzz'); vib([200]); }
+      else if (m.k === 'vaulted') { showResult('🏦', 'เจอตู้นิรภัย!', `${m.vn} เปิดตู้นิรภัยอยู่ คุณโดนปรับ ${m.amt} เม็ด`); SFX.play('shield'); vib([200]); }
       else if (m.k === 'empty') { showResult('🕸️', 'ตู้ว่างเปล่า', `${m.vn} ยังไม่มีเพชรเลย`); SFX.play('wrong'); }
-      else if (m.k === 'shielded') { showResult('🛡️', 'เป้าหมายมีโล่คุ้มกัน', `${m.vn} เพิ่งโดนปล้น ตั๋วยังอยู่ ลองเลือกคนอื่น`); }
-      else if (m.k === 'robbed') { alertBanner('red', '😱', `${esc(m.tn)} ขโมยเพชรคุณไป ${m.amt} เม็ด!`, 'คุณมีโล่คุ้มกัน 25 วินาที · ซื้อล็อกตู้กันครั้งหน้าได้'); SFX.play('break'); vib([200, 80, 200]); }
-      else if (m.k === 'saved') { alertBanner('gold', '🔒', `ล็อกตู้กัน ${esc(m.tn)} ไว้ได้!`, 'ล็อกถูกใช้ไปแล้ว ซื้อใหม่ได้ถ้ามีเพชรพอ'); SFX.play('shield'); vib(80); }
-      else if (m.k === 'locked') { toast('🔒 ติดตั้งล็อกตู้แล้ว'); SFX.play('shield'); }
-      else if (m.k === 'nolock') { toast('เพชรไม่พอสำหรับล็อกตู้'); }
+      else if (m.k === 'shielded') { pending++; showResult('🛡️', 'เป้าหมายมีโล่คุ้มกัน', `${m.vn} เพิ่งโดนปล้น เดี๋ยวได้เลือกใหม่`); }
+      else if (m.k === 'notarget') { /* แจ้งไปแล้วในเครื่อง */ }
+      else if (m.k === 'robbed') { alertBanner('red', '😱', `${esc(m.tn)} ขโมยเพชรคุณไป ${m.amt} เม็ด!`, 'คุณมีโล่คุ้มกัน 25 วินาที'); SFX.play('break'); vib([200, 80, 200]); }
+      else if (m.k === 'grabbed') { alertBanner('red', '👐', `${esc(m.tn)} ใช้สกิลล้วงหมู่! เสียไป ${m.amt} เม็ด`, 'เพราะคุณติดอันดับผู้นำ'); SFX.play('break'); vib([120, 60, 120]); }
+      else if (m.k === 'vaultwin') { alertBanner('gold', '🏦', `ตู้นิรภัยกัน ${esc(m.tn)} ไว้ได้!`, m.amt ? `ได้ค่าปรับ ${m.amt} เม็ด` : ''); SFX.play('shield'); vib(80); }
+      else if (m.k === 'skill') skillFx(m.s, m.s === 'pick' ? (m.amt ? `ล้วงจากผู้นำ ${m.n} คน ได้ ${m.amt} เม็ด!` : 'ผู้นำทุกคนมีโล่อยู่ ล้วงไม่ได้รอบนี้') : null);
     }
   }
   function alertBanner(kind, e, t, sub) {
@@ -335,7 +400,7 @@ const Player = (() => {
     if (!p) { $('e-rank').textContent = '–'; $('e-of').textContent = 'ไม่มีข้อมูลของคุณในรอบนี้'; return; }
     $('e-rank').textContent = '#' + p.rank; $('e-of').textContent = `จาก ${res.total} คน`;
     $('e-dia').innerHTML = p.d + ' ' + gem;
-    $('e-stats').innerHTML = `<div><b>${p.cor}/${p.ans}</b><span>ตอบถูก</span></div><div><b>${p.stl}</b><span>ขโมยได้</span></div><div><b>${p.blk}</b><span>ล็อกกันได้</span></div>`;
+    $('e-stats').innerHTML = `<div><b>${p.cor}/${p.ans}</b><span>ตอบถูก</span></div><div><b>${p.stl}</b><span>ขโมยได้</span></div><div><b>${p.sk || 0}</b><span>ใช้สกิล</span></div>`;
     let h = '';
     for (const a of p.awards) h += `<div class="aw gold pop"><div class="em">${a.emoji}</div><div><span class="label">รางวัลพิเศษ</span><div class="display" style="font-size:1.3rem">${a.name}</div><div class="muted">${esc(a.value)}</div></div></div>`;
     if (p.badge) h += `<div class="aw pop"><div class="em">${p.badge.emoji}</div><div><span class="label">เหรียญของคุณ</span><div class="display" style="font-size:1.2rem">${p.badge.name}</div><div class="muted">${esc(p.badge.desc)}</div></div></div>`;
@@ -354,6 +419,6 @@ const Player = (() => {
   }
   boot();
   // ใช้ทดสอบอัตโนมัติในโหมดทดลองเท่านั้น
-  if (Net.isLocal) window.__mh = { get crack() { return crack; }, inZone, tap: () => tapCrack() };
+  if (Net.isLocal) window.__mh = { get crack() { return crack; }, inZone, tap: () => tapCrack(), get pending() { return pending; }, get myCor() { return myCor; } };
   return {};
 })();
