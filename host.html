@@ -103,11 +103,26 @@
   th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; font-size: .98rem; }
   th { font: 600 .85rem/1 var(--display); color: var(--muted); background: var(--bg); }
   #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+  .cl small.sk { color: var(--gold-ink); margin-top: 6px; }
+  /* ภาพตัดฉากสกิล */
+  #cutins { position: fixed; inset: 0; pointer-events: none; z-index: 55; }
+  .ci { position: absolute; left: 0; right: 0; top: 50%; height: 30%; min-height: 170px; transform: translateY(-50%); display: flex; align-items: center; animation: ciLife 2.4s cubic-bezier(.2,.9,.2,1) both; }
+  .ci-band { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--tc) 85%, #000), color-mix(in srgb, var(--tc) 55%, #0b1022)); box-shadow: 0 0 60px color-mix(in srgb, var(--tc) 60%, transparent); }
+  .ci-band::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(0,0,0,.18) 0 18px, transparent 18px 44px); animation: ciStripes .6s linear infinite; }
+  .ci-in { position: relative; display: flex; align-items: center; gap: 28px; padding: 0 7%; color: #fff; }
+  .ci-em { font-size: clamp(5rem, 11vw, 9rem); filter: drop-shadow(0 8px 24px rgba(0,0,0,.4)); animation: ciEm 2.4s cubic-bezier(.2,.9,.2,1) both; }
+  .ci-who { font: 600 clamp(1rem, 1.8vw, 1.4rem)/1.2 var(--display); opacity: .9; }
+  .ci-name { font: 800 clamp(2.6rem, 6vw, 5rem)/1.05 var(--display); text-shadow: 0 6px 30px rgba(0,0,0,.35); }
+  .ci-sub { font: 600 clamp(1rem, 1.8vw, 1.4rem)/1.3 var(--display); margin-top: 6px; opacity: .95; }
+  @keyframes ciLife { 0% { opacity: 0; transform: translate(-60%, -50%); } 12% { opacity: 1; transform: translate(0, -50%); } 84% { opacity: 1; transform: translate(1.5%, -50%); } 100% { opacity: 0; transform: translate(60%, -50%); } }
+  @keyframes ciEm { 0% { transform: scale(.4) rotate(-14deg); } 18% { transform: scale(1.15) rotate(5deg); } 30% { transform: scale(1) rotate(0); } 100% { transform: scale(1.06); } }
+  @keyframes ciStripes { to { background-position: 44px 0; } }
 </style>
 </head>
 <body>
 <canvas id="confetti"></canvas>
 <div id="alarmedge"></div>
+<div id="cutins"></div>
 
 <!-- ตั้งค่า -->
 <section class="view on" id="v-setup">
@@ -126,9 +141,10 @@
         <h3 style="margin-bottom:14px">กติกาสั้น ๆ</h3>
         <ul class="rule-list">
           <li><span class="n">💎</span><span>ตอบถูกได้เพชร 10 เม็ด ตอบเร็วและตอบถูกติดกันได้โบนัส</span></li>
-          <li><span class="n">🎟️</span><span>ตอบถูกครบ 3 ข้อ ได้ตั๋วปล้น 1 ใบ</span></li>
-          <li><span class="n">🔓</span><span>ใช้ตั๋วเลือกเป้าหมาย แล้วงัดสลักตู้เซฟ 3 ตัวให้ทัน ยิ่งงัดได้มาก ยิ่งขโมยได้เยอะ</span></li>
-          <li><span class="n">🔒</span><span>ซื้อล็อกตู้ได้ด้วยเพชร 20 เม็ด กันการปล้นได้ 1 ครั้ง</span></li>
+          <li><span class="n">🦹</span><span>ตอบถูกสะสมครบทุก 3 ข้อ หน้าปล้นเด้งขึ้นเอง เลือกเป้าใน 6 วินาที (ไม่เลือกระบบสุ่มให้)</span></li>
+          <li><span class="n">🔓</span><span>งัดสลัก 2 ตัวภายใน 5 วินาที ได้ 2 ตัวขโมย 25% ได้ 1 ตัวขโมย 12%</span></li>
+          <li><span class="n">⚡</span><span>ตอบถูกสะสมครบทุก 9 ข้อ สกิลอาชีพทำงานเอง และขึ้นภาพตัดฉากบนจอนี้</span></li>
+          <li><span class="n">🛡️</span><span>คนที่เพิ่งโดนปล้นมีโล่คุ้มกัน 25 วินาที</span></li>
         </ul>
         <div class="classes" id="s-classes"></div>
       </div>
@@ -177,7 +193,7 @@
     <div class="board">
       <h3>🏆 จอมโจรอันดับต้น</h3>
       <div class="rows" id="rows"></div>
-      <div class="stats-row"><div class="stat"><b id="st-stolen">0</b><span>เพชรถูกขโมยรวม</span></div><div class="stat"><b id="st-heists">0</b><span>ปล้นสำเร็จ</span></div><div class="stat"><b id="st-blocks">0</b><span>ล็อกกันไว้ได้</span></div></div>
+      <div class="stats-row"><div class="stat"><b id="st-stolen">0</b><span>เพชรถูกขโมยรวม</span></div><div class="stat"><b id="st-heists">0</b><span>ปล้นสำเร็จ</span></div><div class="stat"><b id="st-blocks">0</b><span>ตู้นิรภัยกันได้</span></div></div>
     </div>
   </div>
 </section>
