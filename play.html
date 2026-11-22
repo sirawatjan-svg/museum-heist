@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0b1022">
 <title>ปล้นพิพิธภัณฑ์</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pixel-ui.css">
 <style>
   body { -webkit-tap-highlight-color: transparent; }
   .m { max-width: 520px; margin: 0 auto; padding: 16px 16px 28px; }
@@ -107,7 +108,7 @@
   .aw .em { font-size: 2.4rem; text-align: center; }
 </style>
 </head>
-<body>
+<body class="pxui">
 
 <!-- เข้าห้อง -->
 <section class="view on" id="v-join"><div class="m">
@@ -132,14 +133,14 @@
 <!-- เล่น -->
 <section class="view" id="v-play"><div class="m">
   <div class="hud">
-    <div class="me-e" id="p-cls">🧤</div>
+    <div class="me-e" id="p-cls"></div>
     <div><div class="dia" id="p-dia">0<svg class="gem-ico" viewBox="0 0 64 64"><use href="#gem"/></svg></div><div class="tm" id="p-time">0:00</div></div>
     <div class="rk"><b id="p-rank">#–</b><span id="p-of">จาก 0 คน</span></div>
   </div>
   <div class="top3" id="p-top3"></div>
   <div class="acts">
-    <div class="act" id="pg-heist">🦹 ปล้นอัตโนมัติ<span class="dots" id="hz-dots"><i></i><i></i><i></i></span><small id="hz-text">ตอบถูกอีก 3 ข้อ</small></div>
-    <div class="act" id="pg-skill"><span id="sk-name">⚡ สกิล</span><span class="skbar"><i id="sk-bar"></i></span><small id="sk-text">ตอบถูกอีก 9 ข้อ</small></div>
+    <div class="act" id="pg-heist"><span data-spr="bag" data-px="22"></span> ปล้นอัตโนมัติ<span class="dots" id="hz-dots"><i></i><i></i><i></i></span><small id="hz-text">ตอบถูกอีก 3 ข้อ</small></div>
+    <div class="act" id="pg-skill"><span id="sk-name">สกิล</span><span class="skbar"><i id="sk-bar"></i></span><small id="sk-text">ตอบถูกอีก 9 ข้อ</small></div>
   </div>
   <div class="fx" id="p-fx"></div>
   <div class="qcard" id="qcard">
@@ -161,7 +162,7 @@
 <!-- แผงปล้น -->
 <div class="sheet" id="heist"><div class="m">
   <div id="h-pick">
-    <div class="row" style="margin-bottom:10px"><h2 style="font-size:1.5rem">🦹 ถึงเวลาปล้น! เลือกตู้</h2><span class="grow"></span><span class="tag tag-gold"><b id="h-pleft">6</b>&nbsp;วิ</span></div>
+    <div class="row" style="margin-bottom:10px"><h2 style="font-size:1.5rem"><span data-spr="bag" data-px="30"></span> ถึงเวลาปล้น! เลือกตู้</h2><span class="grow"></span><span class="tag tag-gold"><b id="h-pleft">6</b>&nbsp;วิ</span></div>
     <div class="pbar"><i id="h-ptime"></i></div>
     <p class="muted" id="h-hint" style="margin:0 0 12px"></p>
     <div class="stack" id="h-list"></div>
@@ -169,18 +170,18 @@
   <div id="h-crack" style="display:none;text-align:center">
     <h2 style="font-size:1.4rem">งัดตู้ของ <span id="h-vname"></span></h2>
     <p class="muted" style="margin:6px 0 0">แตะเมื่อเข็มอยู่ในโซนเขียว 2 ครั้ง ภายใน 5 วินาที</p>
-    <div class="dial-wrap"><canvas id="dial" width="640" height="640"></canvas></div>
-    <div class="pins" id="pins"><span>🔩</span><span>🔩</span></div>
+    <div class="dial-wrap"><canvas id="dial" width="150" height="150" style="image-rendering:pixelated"></canvas></div>
+    <div class="pins" id="pins"><span><span data-spr="pin" data-px="30"></span></span><span><span data-spr="pin" data-px="30"></span></span></div>
     <button class="btn btn-alarm btn-lg btn-block" id="h-tap" style="margin-top:14px">งัด!</button>
   </div>
   <div id="h-result" class="result" style="display:none">
-    <div class="big" id="r-e">💎</div><h2 id="r-h"></h2><p id="r-p"></p>
+    <div class="big" id="r-e"></div><h2 id="r-h"></h2><p id="r-p"></p>
     <button class="btn btn-primary btn-lg btn-block" id="r-back" style="margin-top:20px">กลับไปตอบคำถาม</button>
   </div>
 </div></div>
 
-<div class="skillfx" id="skillfx"><div><div class="em" id="sf-em">⚡</div><div class="label" style="color:#ffd36b">สกิลอาชีพทำงาน!</div><h2 id="sf-name"></h2><p id="sf-desc"></p></div></div>
-<div class="alert" id="alert"><div class="e" id="al-e">😱</div><div id="al-t"></div></div>
+<div class="skillfx" id="skillfx"><div><div class="em" id="sf-em"></div><div class="label" style="color:#ffd36b">สกิลอาชีพทำงาน!</div><h2 id="sf-name"></h2><p id="sf-desc"></p></div></div>
+<div class="alert" id="alert"><div class="e" id="al-e"></div><div id="al-t"></div></div>
 <div class="gain" id="gain"></div>
 <div class="overlay" id="p-countdown"><div class="num" id="p-cd">3</div></div>
 <div class="toast" id="toast" style="display:none"></div>
@@ -196,6 +197,9 @@
 <script src="js/config.js"></script>
 <script src="js/net.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/scene.js"></script>
+<script>Scene.mount({ dim: .45 });</script>
 <script src="js/rules.js"></script>
 <script src="js/player.js"></script>
 </body>
