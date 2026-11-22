@@ -19,7 +19,7 @@ const Host = (() => {
   function joinUrl() { return location.origin + location.pathname.replace(/host\.html$/, '') + 'play.html?room=' + code + (Net.isLocal ? '&local=1' : ''); }
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
-  const gem = '<svg class="gem-ico" viewBox="0 0 64 64"><use href="#gem"/></svg>';
+  const gem = Spr.img('gem', 20, 'gem-ico');
 
   // ---------------- ตั้งค่า ----------------
   function initSetup() {
@@ -31,7 +31,7 @@ const Host = (() => {
     for (const [gid, key] of [['s-dur', 'dur'], ['s-qt', 'qt']]) {
       $(gid).querySelectorAll('button').forEach(b => b.onclick = () => { $(gid).querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); cfg[key] = +b.dataset.v; SFX.play('pop'); });
     }
-    $('s-classes').innerHTML = Rules.CLASSES.map(c => `<div class="cl"><div class="e">${c.emoji}</div><b>${c.name}</b><small>${c.power}</small><small class="sk">${c.skillEmoji} ${c.skill}: ${c.skillDesc}</small></div>`).join('');
+    $('s-classes').innerHTML = Rules.CLASSES.map(c => `<div class="cl"><div class="e">${Spr.anim(c.id, 'idle', 54)}</div><b>${c.name}</b><small>${c.power}</small><small class="sk">${Spr.img(Spr.SKILL[c.id], 20)} ${c.skill}: ${c.skillDesc}</small></div>`).join('');
     $('s-mode').innerHTML = Net.isLocal
       ? 'โหมดทดลองในเครื่อง: สแกน QR ไม่ได้ ให้เปิดลิงก์นักเรียนในแท็บใหม่ของเบราว์เซอร์นี้ (หลายแท็บ = หลายคน)'
       : 'ห้องออนไลน์: นักเรียนสแกน QR ด้วยมือถือ · <a href="host.html?local=1">ทดลองในเครื่องนี้แทน</a>';
@@ -39,7 +39,7 @@ const Host = (() => {
     $('btn-create').onclick = create;
     ['btn-mute1', 'btn-mute2', 'btn-mute3'].forEach(id => $(id).onclick = toggleMute);
   }
-  function toggleMute() { SFX.setMuted(!SFX.isMuted()); const t = SFX.isMuted() ? '🔇' : '🔊'; ['btn-mute1', 'btn-mute2', 'btn-mute3'].forEach(id => $(id).textContent = t); }
+  function toggleMute() { SFX.setMuted(!SFX.isMuted()); const t = Spr.img(SFX.isMuted() ? 'mute' : 'speaker', 22); ['btn-mute1', 'btn-mute2', 'btn-mute3'].forEach(id => $(id).innerHTML = t); }
 
   async function create() {
     const set = Bank.getSet(cfg.setId);
@@ -93,7 +93,7 @@ const Host = (() => {
     const list = Object.entries(players);
     $('l-count').textContent = list.length;
     $('hud-players').textContent = list.length + ' คน';
-    $('l-chips').innerHTML = list.map(([pid, p]) => { const c = p.cls ? Rules.cls(p.cls) : null; return `<div class="chip ${seen.has(pid) ? '' : 'pop'}"><span class="e">${c ? c.emoji : '❔'}</span>${esc(p.name)}</div>`; }).join('');
+    $('l-chips').innerHTML = list.map(([pid, p]) => { const c = p.cls ? Rules.cls(p.cls) : null; return `<div class="chip ${seen.has(pid) ? '' : 'pop'}"><span class="e">${Spr.img('hd:' + (c ? c.id : 'none'), 32)}</span>${esc(p.name)}</div>`; }).join('');
     for (const [pid] of list) if (!seen.has(pid)) { seen.add(pid); if ($('v-lobby').classList.contains('on')) SFX.play('pop'); }
     // คนเข้าช้าระหว่างเล่น → สร้างตู้ให้ทันที
     if (started && !ending) for (const [pid, p] of list) if (!B[pid]) { B[pid] = blank(p); dirty = true; }
@@ -193,7 +193,7 @@ const Host = (() => {
     // ถูกสะสมครบ 9 → สกิลทำงานก่อน แล้วครบ 3 → เปิดรอบปล้น (ข้อ 9, 18, 27 ได้ทั้งสองอย่าง)
     if (P.cor % TU.perSkill === 0) useSkill(a.pid);
     if (P.cor % TU.perHeist === 0) P.hq++;
-    if (streak === 5 || streak === 10 || streak === 15) news({ e: '🔥', big: false, h: `<b>${esc(P.n)}</b> ตอบถูก ${streak} ข้อติด!` });
+    if (streak === 5 || streak === 10 || streak === 15) news({ e: 'star', big: false, h: `<b>${esc(P.n)}</b> ตอบถูก ${streak} ข้อติด!` });
   }
 
   // ---------------- สกิลอาชีพ (ทำงานเองทุก 9 ข้อ) ----------------
@@ -221,7 +221,7 @@ const Host = (() => {
     } else {
       P.vault = now + TU.vaultMs; sub = `${TU.vaultMs / 1000} วินาทีนี้ ใครมาปล้นจะเสียเพชรให้แทน`; msg(pid, { k: 'skill', s: 'guard' });
     }
-    news({ e: c.skillEmoji, big: true, h: `<b>${esc(P.n)}</b> ใช้สกิล <b>${esc(c.skill)}</b>!`, sub });
+    news({ e: Spr.SKILL[c.id], big: true, h: `<b>${esc(P.n)}</b> ใช้สกิล <b>${esc(c.skill)}</b>!`, sub });
     cutin(P, c, sub);
     SFX.play('skillready');
   }
@@ -234,7 +234,7 @@ const Host = (() => {
     ciBusy = true;
     const el = document.createElement('div'); el.className = 'ci';
     el.style.setProperty('--tc', x.c.color);
-    el.innerHTML = `<div class="ci-band"></div><div class="ci-in"><div class="ci-em">${x.c.skillEmoji}</div><div><div class="ci-who">${x.c.emoji} ${esc(x.P.n)} · ${esc(x.c.name)}</div><div class="ci-name">${esc(x.c.skill)}!</div><div class="ci-sub">${esc(x.sub)}</div></div></div>`;
+    el.innerHTML = `<div class="ci-band"></div><div class="ci-in"><div class="ci-em">${Spr.anim(x.c.id, 'cheer', 120)}${Spr.img(Spr.SKILL[x.c.id], 120)}</div><div><div class="ci-who">${Spr.img('hd:' + x.c.id, 34)} ${esc(x.P.n)} · ${esc(x.c.name)}</div><div class="ci-name">${esc(x.c.skill)}!</div><div class="ci-sub">${esc(x.sub)}</div></div></div>`;
     $('cutins').appendChild(el);
     setTimeout(() => { el.remove(); nextCutin(); }, ciQ.length ? 1700 : 2400);
   }
@@ -252,7 +252,7 @@ const Host = (() => {
       T.d -= fine; V.d += fine; V.blk++; totals.blocks++;
       msg(a.pid, { k: 'vaulted', vn: V.n, amt: fine });
       msg(a.target, { k: 'vaultwin', tn: T.n, amt: fine });
-      news({ e: '🏦', big: true, h: `<b>${esc(T.n)}</b> งัดตู้นิรภัยของ <b>${esc(V.n)}</b> ไม่เข้า!`, sub: fine ? `โดนปรับ เสียเพชรให้ ${fine} เม็ด` : 'กลับมือเปล่า' });
+      news({ e: 'vault', big: true, h: `<b>${esc(T.n)}</b> งัดตู้นิรภัยของ <b>${esc(V.n)}</b> ไม่เข้า!`, sub: fine ? `โดนปรับ เสียเพชรให้ ${fine} เม็ด` : 'กลับมือเปล่า' });
       SFX.play('shield');
       return;
     }
@@ -260,14 +260,14 @@ const Host = (() => {
     const hits = ghost ? TU.pins : Math.max(0, Math.min(TU.pins, a.hits | 0));
     if (!Rules.stealRate(hits, T.c, V.c, ghost)) {
       msg(a.pid, { k: 'fail', vn: V.n, hits });
-      news({ e: '🚨', big: false, h: pick([`สัญญาณกันขโมยดัง! <b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> ไม่ทัน`, `<b>${esc(T.n)}</b> มือสั่น งัดตู้ <b>${esc(V.n)}</b> พลาด`]) });
+      news({ e: 'siren', big: false, h: pick([`สัญญาณกันขโมยดัง! <b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> ไม่ทัน`, `<b>${esc(T.n)}</b> มือสั่น งัดตู้ <b>${esc(V.n)}</b> พลาด`]) });
       SFX.play('buzz');
       return;
     }
     const amt = Rules.stealAmount(V.d, hits, T.c, V.c, ghost);
     if (amt <= 0) {
       msg(a.pid, { k: 'empty', vn: V.n });
-      news({ e: '🕸️', big: false, h: `<b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> สำเร็จ แต่ตู้ว่างเปล่า!` });
+      news({ e: 'safe', big: false, h: `<b>${esc(T.n)}</b> งัดตู้ <b>${esc(V.n)}</b> สำเร็จ แต่ตู้ว่างเปล่า!` });
       return;
     }
     V.d -= amt; T.d += amt; T.stl += amt; T.hz++; V.lost += amt; V.rob++; V.sh = now + TU.protectMs;
@@ -275,11 +275,11 @@ const Host = (() => {
     msg(a.pid, { k: 'stole', vn: V.n, amt, hits, ghost });
     msg(a.target, { k: 'robbed', tn: T.n, amt });
     const tc = Rules.cls(T.c);
-    news({ e: tc.emoji, big: true, flash: [a.pid, a.target], h: pick([
+    news({ e: 'hd:' + tc.id, big: true, flash: [a.pid, a.target], h: pick([
       `<b>${esc(T.n)}</b> ฉกเพชร ${amt} เม็ดจาก <b>${esc(V.n)}</b>!`,
       `ตู้เซฟของ <b>${esc(V.n)}</b> ถูกงัด! หายไป ${amt} เม็ด`,
       `<b>${esc(T.n)}</b> ${tc.short}! ขนเพชรของ <b>${esc(V.n)}</b> ไป ${amt} เม็ด`,
-    ]), sub: ghost ? '🗝️ ใช้กุญแจผีเปิดตู้' : hits >= TU.pins ? 'งัดสลักครบทุกตัว' : hits ? `งัดได้ ${hits} จาก ${TU.pins} สลัก` : '🕵️ แผนสำรองของจอมวางแผน' });
+    ]), sub: ghost ? 'ใช้กุญแจผีเปิดตู้' : hits >= TU.pins ? 'งัดสลักครบทุกตัว' : hits ? `งัดได้ ${hits} จาก ${TU.pins} สลัก` : '🕵️ แผนสำรองของจอมวางแผน' });
     SFX.play('break');
   }
 
@@ -288,14 +288,14 @@ const Host = (() => {
   function news(o) {
     const d = document.createElement('div'); d.className = 'it fadeup';
     const tm = meta && meta.endAt ? Math.max(0, Math.ceil((meta.endAt - Net.now()) / 1000)) : 0;
-    d.innerHTML = `<span class="e">${o.e}</span><span>${o.h}</span><span class="t">${Math.floor(tm / 60)}:${String(tm % 60).padStart(2, '0')}</span>`;
+    d.innerHTML = `<span class="e">${Spr.img(o.e, 34)}</span><span>${o.h}</span><span class="t">${Math.floor(tm / 60)}:${String(tm % 60).padStart(2, '0')}</span>`;
     $('feed').prepend(d);
     while ($('feed').children.length > 7) $('feed').lastChild.remove();
     // หัวข่าวใหญ่: ข่าวสำคัญขึ้นทันที ข่าวเล็กขึ้นเฉพาะตอนจอว่างนาน
     const now = performance.now();
     if (o.big || now - lastBig > 6000) {
       if (o.big) lastBig = now;
-      $('brk').innerHTML = `<div class="ico pop">${o.e}</div><div><h2 class="fadeup">${o.h}</h2>${o.sub ? `<div class="sub">${esc(o.sub)}</div>` : ''}</div>`;
+      $('brk').innerHTML = `<div class="ico pop">${Spr.img(o.e, 96)}</div><div><h2 class="fadeup">${o.h}</h2>${o.sub ? `<div class="sub">${esc(o.sub)}</div>` : ''}</div>`;
     }
     if (o.flash) flashRows(o.flash);
   }
@@ -319,14 +319,14 @@ const Host = (() => {
       if (!el) { el = document.createElement('div'); el.className = 'lrow'; el.dataset.pid = pid; el.style.top = (max * rowH) + 'px'; host.appendChild(el); void el.offsetWidth; }
       el.style.top = (i * rowH) + 'px';
       el.className = 'lrow' + (i < 3 ? ' r' + (i + 1) : '') + (fl && fl.up === pid ? ' flash-up' : '') + (fl && fl.down === pid ? ' flash-down' : '');
-      el.innerHTML = `<span class="rk">${i === 0 ? '👑' : i + 1}</span><span class="e">${Rules.cls(P.c).emoji}</span><span class="nm">${esc(P.n)}</span><span class="d">${P.d}${gem}</span>`;
+      el.innerHTML = `<span class="rk">${i === 0 ? Spr.img('crown', 30) : i + 1}</span><span class="e">${Spr.img('hd:' + P.c, 36)}</span><span class="nm">${esc(P.n)}</span><span class="d">${P.d}${gem}</span>`;
     });
     // เปลี่ยนผู้นำ
     if (list.length && list[0][1].d > 0) {
       const lp = list[0][0];
       if (leader !== lp) {
         const first = leader == null; leader = lp;
-        if (!first && meta && Net.now() - meta.startAt > 15000) { news({ e: '👑', big: true, h: `<b>${esc(list[0][1].n)}</b> ขึ้นเป็นจอมโจรอันดับ 1!`, sub: `ถือเพชรอยู่ ${list[0][1].d} เม็ด` }); SFX.play('award'); }
+        if (!first && meta && Net.now() - meta.startAt > 15000) { news({ e: 'crown', big: true, h: `<b>${esc(list[0][1].n)}</b> ขึ้นเป็นจอมโจรอันดับ 1!`, sub: `ถือเพชรอยู่ ${list[0][1].d} เม็ด` }); SFX.play('award'); }
       }
     }
   }
@@ -371,7 +371,7 @@ const Host = (() => {
     show('v-end'); SFX.startMusic(92, 'heist');
     revealStep = 0; $('e-award').innerHTML = ''; $('e-board').style.display = 'none'; $('btn-next').style.display = '';
     const pp = results.podium.map(pid => results.personal[pid]);
-    const slot = (p, cls, n) => p ? `<div class="pod ${cls} hidden" data-n="${n}"><div class="e">${Rules.cls(p.c).emoji}</div><div class="who">${esc(p.name)}</div><div class="dd">${p.d} ${gem}</div><div class="block">${n}</div></div>` : `<div class="pod ${cls} hidden" data-n="${n}"></div>`;
+    const slot = (p, cls, n) => p ? `<div class="pod ${cls} hidden" data-n="${n}"><div class="e">${Spr.anim(p.c, 'cheer', 84)}</div><div class="who">${esc(p.name)}</div><div class="dd">${p.d} ${gem}</div><div class="block">${n}</div></div>` : `<div class="pod ${cls} hidden" data-n="${n}"></div>`;
     $('podium').innerHTML = slot(pp[1], 'p2', 2) + slot(pp[0], 'p1', 1) + slot(pp[2], 'p3', 3);
     $('podium').classList.remove('compact');
     $('btn-next').textContent = 'เปิดอันดับ 3 ▶';
@@ -390,7 +390,7 @@ const Host = (() => {
     const ai = revealStep - 4;
     if (ai < results.awards.length) {
       const a = results.awards[ai];
-      $('e-award').innerHTML = `<div class="award pop"><div class="em">${a.emoji}</div><div style="text-align:left"><div class="an">รางวัลพิเศษ ${ai + 1}/${results.awards.length} · ${a.name}</div><div class="pn">${esc(a.pname)}</div><div class="muted" style="font-size:1.1rem">${esc(a.desc)}</div><span class="tag tag-gold" style="margin-top:12px">${esc(a.value)}</span></div></div>`;
+      $('e-award').innerHTML = `<div class="award pop"><div class="em">${Spr.img(Spr.ic(a.emoji), 112)}</div><div style="text-align:left"><div class="an">รางวัลพิเศษ ${ai + 1}/${results.awards.length} · ${a.name}</div><div class="pn">${esc(a.pname)}</div><div class="muted" style="font-size:1.1rem">${esc(a.desc)}</div><span class="tag tag-gold" style="margin-top:12px">${esc(a.value)}</span></div></div>`;
       $('podium').classList.add('compact');
       setTimeout(() => $('e-award').scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
       SFX.play('award'); confetti(70);
@@ -400,7 +400,7 @@ const Host = (() => {
     $('e-award').innerHTML = ''; $('btn-next').style.display = 'none'; $('e-board').style.display = '';
     const rows = Object.values(results.personal).sort((a, b) => a.rank - b.rank);
     $('e-table').innerHTML = `<tr><th>#</th><th>ชื่อ</th><th>อาชีพ</th><th>เพชร</th><th>ตอบถูก</th><th>ขโมยได้</th><th>โดนปล้น</th><th>กันได้</th></tr>` +
-      rows.map(p => `<tr><td><b>${p.rank}</b></td><td><b>${esc(p.name)}</b></td><td>${Rules.cls(p.c).emoji} ${Rules.cls(p.c).name}</td><td><b>${p.d}</b></td><td>${p.cor}/${p.ans}</td><td>${p.stl}</td><td>${p.rob} ครั้ง</td><td>${p.blk}</td></tr>`).join('');
+      rows.map(p => `<tr><td><b>${p.rank}</b></td><td><b>${esc(p.name)}</b></td><td>${Spr.img('hd:' + p.c, 26)} ${Rules.cls(p.c).name}</td><td><b>${p.d}</b></td><td>${p.cor}/${p.ans}</td><td>${p.stl}</td><td>${p.rob} ครั้ง</td><td>${p.blk}</td></tr>`).join('');
   }
   async function rematch() {
     await Net.remove(R + '/acts'); await Net.remove(R + '/msg'); await Net.remove(R + '/results'); await Net.remove(R + '/board');
