@@ -1,0 +1,198 @@
+/* pixel-ui.css — กรอบ ปุ่ม ป้าย แบบเกมพิกเซลมีมิติ (ใช้เมื่อ <body class="pxui">)
+   หลักการ: ขอบหยัก 4px ด้วย box-shadow (มุมเว้าแบบพิกเซล) + ขอบบนสว่าง/ล่างมืด + เงาตกแข็ง */
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+
+:root {
+  --pixel: 'Silkscreen', 'Kanit', system-ui, sans-serif;
+  --o: #05060f;                                  /* เส้นขอบดำ */
+  --edge: 0 -4px 0 0 var(--o), 0 4px 0 0 var(--o), -4px 0 0 0 var(--o), 4px 0 0 0 var(--o);
+  --drop: 8px 12px 0 0 rgba(0,0,0,.42);
+}
+
+/* ---------- ฉากหลัง (js/scene.js) ---------- */
+.scene-cv { position: fixed; inset: 0; width: 100vw; height: 100vh; object-fit: cover; image-rendering: pixelated; image-rendering: crisp-edges; z-index: -2; }
+.scene-vig { position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(5,7,18,0) 35%, rgba(5,7,18,.78) 100%), rgba(6,8,22,var(--dim, .35)); }
+html:has(body.pxui) { background: #05060f; }
+body.pxui { background: transparent !important; }
+
+/* ---------- แผงกรอบพิกเซล ---------- */
+.pxui .pp {
+  position: relative; border-radius: 0; border: 0;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,.022) 0 25%, transparent 0 50%) 0 0 / 8px 8px,
+    linear-gradient(180deg, rgba(35,44,98,.9) 0%, rgba(24,32,74,.86) 40%, rgba(18,24,56,.88) 100%);
+  box-shadow: var(--edge),
+    inset 0 4px 0 0 rgba(255,255,255,.14), inset 4px 0 0 0 rgba(255,255,255,.06),
+    inset 0 -6px 0 0 rgba(0,0,0,.4), inset -4px 0 0 0 rgba(0,0,0,.25),
+    var(--drop);
+}
+/* กรอบทองแบบกรอบภาพในพิพิธภัณฑ์ */
+.pxui .pp-gold {
+  box-shadow:
+    0 -4px 0 0 #ffd36b, 0 4px 0 0 #8a5a00, -4px 0 0 0 #f4b400, 4px 0 0 0 #b07d00,
+    0 -8px 0 0 var(--o), 0 8px 0 0 var(--o), -8px 0 0 0 var(--o), 8px 0 0 0 var(--o),
+    -4px -4px 0 0 var(--o), 4px -4px 0 0 var(--o), -4px 4px 0 0 var(--o), 4px 4px 0 0 var(--o),
+    inset 0 4px 0 0 rgba(255,255,255,.12), inset 0 -6px 0 0 rgba(0,0,0,.4),
+    12px 16px 0 0 rgba(0,0,0,.42);
+}
+/* หัวแผงแบบแถบป้าย */
+.pxui .pp-head { display: flex; align-items: center; gap: 12px; margin: -4px -4px 12px; padding: 12px 16px 14px;
+  background: linear-gradient(180deg, #2f3a7c, #222b60); box-shadow: inset 0 3px 0 0 rgba(255,255,255,.16), inset 0 -4px 0 0 rgba(0,0,0,.45);
+  font: 700 1.35rem/1.1 var(--display); }
+.pxui .pp-head .en { font: 400 .62rem/1 var(--pixel); letter-spacing: .18em; color: var(--gold); text-transform: uppercase; }
+.pxui .pp-head.gold { background: linear-gradient(180deg, #ffd45c, #e0a100); color: #2a1a00; box-shadow: inset 0 3px 0 0 #fff3b0, inset 0 -4px 0 0 #8a5a00; }
+.pxui .pp-head.gold .en { color: #5a3a00; }
+.pxui .pp-head.alarm { background: repeating-linear-gradient(-45deg, #ff4f5e 0 14px, #d8324a 14px 28px); background-size: 40px 40px; animation: hazard 1.2s linear infinite; color: #fff; box-shadow: inset 0 3px 0 0 #ff9aa3, inset 0 -4px 0 0 #7a1020; text-shadow: 2px 2px 0 #7a1020; }
+@keyframes hazard { to { background-position: 40px 0; } }
+.pxui .livechip { font: 700 .7rem/1 var(--pixel); letter-spacing: .12em; background: #fff; color: #d8324a; padding: 5px 8px 4px; box-shadow: 0 -2px 0 #fff, 0 2px 0 #fff, inset 0 -2px 0 rgba(0,0,0,.2); animation: liveb 1s steps(1) infinite; }
+@keyframes liveb { 50% { background: #ffd0d4; } }
+
+/* ---------- ปุ่มหนา กดยุบได้ ---------- */
+.pxui .btn { border-radius: 0; border: 0; font: 700 1rem/1 var(--display); padding: 13px 20px 15px; position: relative;
+  background: linear-gradient(180deg, #3a4682, #2a3264); color: #fff;
+  box-shadow: var(--edge), inset 0 3px 0 0 rgba(255,255,255,.22), inset 0 -5px 0 0 rgba(0,0,0,.38), 0 8px 0 0 var(--o), 4px 8px 0 0 var(--o), -4px 8px 0 0 var(--o);
+  transform: translateY(-4px); transition: transform .06s, box-shadow .06s; }
+.pxui .btn:hover { transform: translateY(-5px); filter: brightness(1.1); }
+.pxui .btn:active { transform: translateY(2px); box-shadow: var(--edge), inset 0 3px 0 0 rgba(0,0,0,.25), 0 2px 0 0 var(--o); }
+.pxui .btn-gold { background: linear-gradient(180deg, #ffd45c, #f4b400 55%, #d99a00); color: #2a1a00; box-shadow: var(--edge), inset 0 3px 0 0 #fff3b0, inset 0 -5px 0 0 #8a5a00, 0 8px 0 0 var(--o), 4px 8px 0 0 var(--o), -4px 8px 0 0 var(--o); }
+.pxui .btn-primary { background: linear-gradient(180deg, #7fe6fa, #3fd0f0 55%, #1fa6c8); color: #04202a; box-shadow: var(--edge), inset 0 3px 0 0 #d8fbff, inset 0 -5px 0 0 #126a91, 0 8px 0 0 var(--o), 4px 8px 0 0 var(--o), -4px 8px 0 0 var(--o); }
+.pxui .btn-alarm { background: linear-gradient(180deg, #ff7a86, #ff4f5e 55%, #d8324a); box-shadow: var(--edge), inset 0 3px 0 0 #ffc2c8, inset 0 -5px 0 0 #7a1020, 0 8px 0 0 var(--o), 4px 8px 0 0 var(--o), -4px 8px 0 0 var(--o); }
+.pxui .btn-ghost { background: linear-gradient(180deg, #232a55, #1a2046); }
+.pxui .btn-sm { padding: 9px 14px 11px; font-size: .9rem; }
+.pxui .btn .px { margin: -4px 0; }
+
+/* ---------- ป้าย/ชิป ---------- */
+.pxui .tag { border-radius: 0; border: 0; background: #1a2150; box-shadow: 0 -3px 0 0 var(--o), 0 3px 0 0 var(--o), -3px 0 0 0 var(--o), 3px 0 0 0 var(--o), inset 0 2px 0 rgba(255,255,255,.12); font: 400 .72rem/1 var(--pixel); letter-spacing: .06em; padding: 7px 10px 6px; }
+
+/* ---------- แถบบน ---------- */
+.pxui .topbar { background: linear-gradient(180deg, #121838, #0a0e24); border-bottom: 0; backdrop-filter: none;
+  box-shadow: 0 3px 0 0 #8a6410, 0 6px 0 0 #3a2c08, 0 10px 0 0 rgba(0,0,0,.45); }
+.pxui .logo { font-family: var(--display); text-shadow: 2px 2px 0 var(--o); }
+
+/* ---------- ตัวเลขพิกเซล ---------- */
+.pxui .pxnum { font-family: var(--pixel) !important; font-weight: 700; letter-spacing: .02em; }
+
+/* แผงกระจก: เห็นฉากหลังลาง ๆ */
+.pxui .pp-glass { background:
+    repeating-conic-gradient(rgba(255,255,255,.025) 0 25%, transparent 0 50%) 0 0 / 8px 8px,
+    linear-gradient(180deg, rgba(40,52,110,.55), rgba(16,22,52,.62));
+  backdrop-filter: blur(3px); }
+
+/* ================= กฎรวมทุกหน้า ================= */
+.pxui h1, .pxui h2 { text-shadow: 3px 3px 0 var(--o); }
+.pxui .gem-ico { filter: drop-shadow(0 0 4px rgba(63,208,240,.5)); }
+
+/* การ์ด/แผงทั่วไป → กรอบนูนพิกเซล */
+.pxui :is(.card, .cls, .hud, .qcard, .tgt, .aw, .top3 > div, .grid3 > div, .cl, .chip, .act, .endcard, .award, .pins span, .stepc, .row-card, .q-item, .set-item) {
+  border-radius: 0 !important; border: 0 !important;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,.022) 0 25%, transparent 0 50%) 0 0 / 8px 8px,
+    linear-gradient(180deg, rgba(40,50,108,.92), rgba(22,29,68,.92) 55%, rgba(17,23,54,.94));
+  box-shadow: var(--edge), inset 0 3px 0 0 rgba(255,255,255,.14), inset 0 -5px 0 0 rgba(0,0,0,.38), 6px 9px 0 0 rgba(0,0,0,.4);
+}
+.pxui .card { padding: 22px; }
+.pxui .card h3 { text-shadow: 2px 2px 0 var(--o); }
+
+/* ปุ่มเลือก (seg) */
+.pxui .seg button { border-radius: 0; border: 0; background: linear-gradient(180deg, #2f3a78, #222b5c); color: #dfe4f3;
+  box-shadow: var(--edge), inset 0 3px 0 rgba(255,255,255,.16), inset 0 -4px 0 rgba(0,0,0,.38), 0 5px 0 var(--o); transform: translateY(-3px); }
+.pxui .seg button.on { background: linear-gradient(180deg, #ffe48a, #f4b400 60%, #c98a00); color: #2a1a00; box-shadow: var(--edge), inset 0 3px 0 #fff6c4, inset 0 -4px 0 #8a5a00, 0 2px 0 var(--o); transform: translateY(0); }
+
+/* ช่องกรอก */
+.pxui :is(input:not([type=checkbox]):not([type=radio]), select, textarea) {
+  border-radius: 0 !important; border: 0 !important; background-color: #080b20 !important; color: #fff;
+  box-shadow: var(--edge), inset 0 4px 0 rgba(0,0,0,.5), inset 0 -2px 0 rgba(255,255,255,.06) !important; }
+.pxui :is(input, select, textarea):focus { outline: 3px solid var(--gold); outline-offset: 4px; }
+
+/* แถบความคืบหน้าแบบพิกเซล */
+.pxui :is(.qbar, .pbar, .skbar) { border-radius: 0; background: #070a1c; box-shadow: 0 -2px 0 var(--o), 0 2px 0 var(--o), -2px 0 0 var(--o), 2px 0 0 var(--o), inset 0 2px 0 rgba(0,0,0,.5); }
+.pxui :is(.qbar, .pbar, .skbar) i { border-radius: 0; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.28) 0 4px, transparent 4px 10px); }
+.pxui .dots i { border-radius: 0; width: 12px; height: 12px; box-shadow: 0 0 0 2px var(--o); }
+
+/* ป้ายสี */
+.pxui .tag-gold { background: #4a3400; color: #ffd36b; }
+.pxui .tag-gem { background: #0c3a4a; color: #7fe6fa; }
+
+/* แผงซ้อนเต็มจอ → เห็นฉากลาง ๆ */
+.pxui:not(.home) .sheet { background: radial-gradient(ellipse at 50% 0%, rgba(255,79,94,.16), transparent 60%), #070a1c; }
+.pxui .overlay .num { font-family: var(--pixel); font-weight: 700; text-shadow: 6px 6px 0 var(--o); }
+.pxui .toast { border-radius: 0; background: #f2f4fb; color: #0b1022; box-shadow: var(--edge), 0 6px 0 var(--o); font-family: var(--display); }
+
+/* ---------- มือถือ ---------- */
+.pxui .cls.on { box-shadow: 0 0 0 4px var(--cc), 0 0 0 8px var(--o), inset 0 3px 0 rgba(255,255,255,.2), 6px 12px 0 rgba(0,0,0,.4) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--cc) 35%, #1a2150), #161d44) !important; }
+.pxui .hud .me-e { border-radius: 0; background: #0a0e26; box-shadow: var(--edge), inset 0 3px 0 rgba(0,0,0,.5); }
+.pxui .hud .dia, .pxui .hud .rk b, .pxui .grid3 b, .pxui .tgt .d, .pxui .endcard .rank { font-family: var(--pixel); font-weight: 700; text-shadow: 2px 2px 0 var(--o); }
+.pxui .top3 div.me { box-shadow: 0 0 0 3px var(--gem), var(--edge), 6px 9px 0 rgba(0,0,0,.4) !important; }
+.pxui .act.ready { background: repeating-linear-gradient(-45deg, #ff4f5e 0 12px, #d8324a 12px 24px) !important; background-size: 34px 34px !important; animation: hazard 1s linear infinite !important; }
+.pxui .act.full { background: linear-gradient(180deg, #ffe48a, #f4b400 60%, #c98a00) !important; color: #2a1a00; }
+.pxui .act.full small { color: #5a3a00; }
+.pxui .fx span { border-radius: 0; border: 0; background: #3a2a00; box-shadow: 0 -2px 0 var(--o), 0 2px 0 var(--o), -2px 0 0 var(--o), 2px 0 0 var(--o); display: inline-flex; align-items: center; gap: 6px; }
+.pxui #p-choices .choice { border-radius: 0 !important; border: 0 !important; background: linear-gradient(180deg, #2f3a78, #222b5c 60%, #1c2350);
+  box-shadow: var(--edge), inset 0 3px 0 rgba(255,255,255,.15), inset 0 -5px 0 rgba(0,0,0,.4), 0 7px 0 var(--o); transform: translateY(-4px); transition: transform .05s; }
+.pxui #p-choices .choice:active { transform: translateY(1px); box-shadow: var(--edge), inset 0 3px 0 rgba(0,0,0,.3), 0 2px 0 var(--o); }
+.pxui #p-choices .choice .k { border-radius: 0; background: #0a0e26; box-shadow: inset 0 3px 0 rgba(0,0,0,.5), 0 0 0 2px var(--o); }
+.pxui #p-choices .choice.ok { background: linear-gradient(180deg, #7ff5c2, #3ddc97 60%, #1fa874) !important; color: #052a1a; transform: translateY(0); }
+.pxui #p-choices .choice.ok .k { background: #0b5a3a; color: #fff; }
+.pxui #p-choices .choice.no { background: linear-gradient(180deg, #ff8f99, #ff4f5e 60%, #c8293c) !important; color: #2a0408; transform: translateY(0); }
+.pxui #p-choices .choice.no .k { background: #7a1020; color: #fff; }
+.pxui .pins span.hit { background: linear-gradient(180deg, #7ff5c2, #1fa874) !important; }
+.pxui .pins span.miss { background: linear-gradient(180deg, #ff8f99, #c8293c) !important; }
+.pxui .alert { border-radius: 0; box-shadow: var(--edge), 0 8px 0 var(--o); }
+.pxui .alert.red { background: repeating-linear-gradient(-45deg, #ff4f5e 0 14px, #d8324a 14px 28px); }
+.pxui .alert.gold { background: linear-gradient(180deg, #ffe48a, #f4b400 60%, #c98a00); color: #2a1a00; border: 0; }
+.pxui .aw.gold { background: linear-gradient(180deg, #5a4000, #3a2a00) !important; box-shadow: 0 -4px 0 #ffd36b, 0 4px 0 #8a5a00, -4px 0 0 #f4b400, 4px 0 0 #b07d00, 0 -8px 0 var(--o), 0 8px 0 var(--o), -8px 0 0 var(--o), 8px 0 0 var(--o), 6px 12px 0 rgba(0,0,0,.4) !important; }
+.pxui .gain { font-family: var(--pixel); text-shadow: 3px 3px 0 var(--o), 0 0 18px rgba(63,208,240,.7); }
+
+/* ---------- จอครู: ล็อบบี้ + จบ ---------- */
+.pxui .rule-list .n { display: grid; place-items: center; }
+.pxui .code { font-family: var(--pixel) !important; font-weight: 700; color: #ffd36b; text-shadow: 4px 4px 0 var(--o), 0 0 16px rgba(244,180,0,.45); letter-spacing: .08em; }
+.pxui #qr-box { box-shadow: 0 0 0 6px #fff, 0 0 0 10px var(--o), 8px 14px 0 rgba(0,0,0,.4); }
+.pxui .pod .block { border-radius: 0 !important; font-family: var(--pixel); text-shadow: 4px 4px 0 rgba(0,0,0,.35);
+  box-shadow: var(--edge), inset 0 5px 0 rgba(255,255,255,.45), inset 0 -8px 0 rgba(0,0,0,.3), inset 6px 0 0 rgba(255,255,255,.18), 10px 0 0 rgba(0,0,0,.35); }
+.pxui .pod .who { text-shadow: 3px 3px 0 var(--o); }
+.pxui .pod .dd { font-family: var(--pixel); text-shadow: 2px 2px 0 var(--o); }
+.pxui table { border-collapse: separate; border-spacing: 0 6px; }
+.pxui table td, .pxui table th { border: 0 !important; }
+.pxui table tr td { background: rgba(26,33,80,.85); }
+.pxui table tr td:first-child { box-shadow: inset 4px 0 0 var(--gold); }
+
+/* ---------- คลังคำถาม ---------- */
+.pxui.bank .top { background: linear-gradient(180deg, #121838, #0a0e24); border-bottom: 0; backdrop-filter: none; box-shadow: 0 3px 0 0 #8a6410, 0 6px 0 0 #3a2c08, 0 10px 0 0 rgba(0,0,0,.45); }
+.pxui.bank :is(.set-card, .panel, .qitem) { border-radius: 0 !important; border: 0 !important;
+  background: repeating-conic-gradient(rgba(255,255,255,.022) 0 25%, transparent 0 50%) 0 0 / 8px 8px, linear-gradient(180deg, rgba(40,50,108,.92), rgba(17,23,54,.94));
+  box-shadow: var(--edge), inset 0 3px 0 rgba(255,255,255,.14), inset 0 -5px 0 rgba(0,0,0,.38), 6px 9px 0 rgba(0,0,0,.4); }
+.pxui.bank .set-card:hover { box-shadow: 0 0 0 4px var(--gem), 0 0 0 8px var(--o), 6px 12px 0 rgba(0,0,0,.4) !important; }
+.pxui.bank button { border-radius: 0; border: 0; background: linear-gradient(180deg, #3a4682, #2a3264); color: #fff;
+  box-shadow: var(--edge), inset 0 3px 0 rgba(255,255,255,.2), inset 0 -4px 0 rgba(0,0,0,.38), 0 6px 0 var(--o); transform: translateY(-3px); }
+.pxui.bank button:active { transform: translateY(1px); box-shadow: var(--edge), 0 2px 0 var(--o); }
+.pxui.bank button.primary { background: linear-gradient(180deg, #7fe6fa, #3fd0f0 55%, #1fa6c8); color: #04202a; }
+.pxui.bank button.danger { background: linear-gradient(180deg, #ff7a86, #d8324a); color: #fff; }
+.pxui.bank code { border-radius: 0; border: 0; box-shadow: 0 0 0 2px var(--o); }
+
+/* ---------- หน้าแรก (body.pxui.home) ---------- */
+.pxui.home :is(.mbtn, .music, .x, .row) { border-radius: 0 !important; border: 0 !important;
+  background: linear-gradient(180deg, rgba(47,58,120,.92), rgba(30,38,86,.94)) !important;
+  box-shadow: var(--edge), inset 0 3px 0 rgba(255,255,255,.16), inset 0 -5px 0 rgba(0,0,0,.4), 0 7px 0 var(--o) !important; }
+.pxui.home .mbtn { transform: translateY(-4px); }
+.pxui.home .mbtn:hover { transform: translateY(-6px); filter: brightness(1.12); }
+.pxui.home .mbtn:active { transform: translateY(1px); }
+.pxui.home .row:hover { filter: brightness(1.15); }
+.pxui.home .start { border-radius: 0 !important; animation: none !important; transform: translateY(-6px);
+  background: linear-gradient(180deg, #ffe48a, #f4b400 55%, #d99a00) !important; color: #2a1a00; text-shadow: 2px 2px 0 rgba(255,255,255,.4);
+  box-shadow: 0 -6px 0 var(--o), 0 6px 0 var(--o), -6px 0 0 var(--o), 6px 0 0 var(--o), inset 0 5px 0 #fff6c4, inset 0 -8px 0 #8a5a00, 0 12px 0 var(--o), 6px 12px 0 var(--o), -6px 12px 0 var(--o), 0 0 40px rgba(244,180,0,.35) !important; }
+.pxui.home .start:hover { transform: translateY(-8px); }
+.pxui.home .start:active { transform: translateY(2px); }
+.pxui.home .sheet { border-radius: 0 !important; border: 0 !important;
+  background: repeating-conic-gradient(rgba(255,255,255,.022) 0 25%, transparent 0 50%) 0 0 / 8px 8px, linear-gradient(180deg, #1c2452, #10153a) !important;
+  box-shadow: 0 -4px 0 #ffd36b, 0 4px 0 #8a5a00, -4px 0 0 #f4b400, 4px 0 0 #b07d00, 0 -8px 0 var(--o), 0 8px 0 var(--o), -8px 0 0 var(--o), 8px 0 0 var(--o), 14px 18px 0 rgba(0,0,0,.5) !important; }
+.pxui.home .sheet h2 { text-shadow: 3px 3px 0 var(--o); }
+.pxui.home .choice { border-radius: 0 !important; border: 0 !important;
+  box-shadow: var(--edge), inset 0 4px 0 rgba(255,255,255,.14), inset 0 -6px 0 rgba(0,0,0,.4), 0 8px 0 var(--o) !important; }
+.pxui.home .choice.teacher { background: linear-gradient(180deg, #5a4210, #3a2a08) !important; }
+.pxui.home .cc { border-radius: 0 !important; box-shadow: var(--edge), 8px 12px 0 rgba(0,0,0,.45); overflow: visible; }
+.pxui.home .cc .cov { box-shadow: inset 0 4px 0 rgba(255,255,255,.25), inset 0 -6px 0 rgba(0,0,0,.3); }
+.pxui.home .cc .gl { border-radius: 0; backdrop-filter: none; background: rgba(5,6,15,.78); box-shadow: 0 0 0 3px var(--o); }
+.pxui.home .cc .tg { border-radius: 0; box-shadow: 0 0 0 2px var(--o); }
+.pxui.home .kicker, .pxui.home .badge { border-radius: 0 !important; }
+.pxui.home h1 { text-shadow: none; }
