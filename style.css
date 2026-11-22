@@ -95,3 +95,4 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--gem-soft); 
 @media (prefers-reduced-motion: reduce) { .pop, .fadeup, .shake { animation-duration: .01s; } }
 
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 999px; font: 600 .98rem/1.3 var(--display); z-index: 90; box-shadow: var(--shadow-lg); max-width: calc(100% - 32px); text-align: center; }
+
