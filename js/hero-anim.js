@@ -34,7 +34,7 @@
   let thieves = [], tags = [], gems = [], motes = [], flash = 0, nextEvent = 1.4, t = 0, beam = { x: 800, y: 800, r: 120 };
   function makeThieves() {
     const n = W < 700 ? 3 : 5;
-    thieves = Array.from({ length: n }, (_, i) => { const p = spot(); return { x: p.x, y: p.y, tx: p.x, ty: p.y, col: COLS[i % COLS.length], sp: rnd(55, 80), ph: rnd(0, 6), wait: rnd(0, 1.5), mode: 'walk', bag: i % 2 ? 10 + i * 4 : 0, face: 1, shake: 0, shield: 0, seen: 0 }; });
+    thieves = Array.from({ length: n }, (_, i) => { const p = spot(); return { x: p.x, y: p.y, tx: p.x, ty: p.y, col: COLS[i % COLS.length], cls: ['pick', 'crack', 'plan', 'guard'][i % 4], sp: rnd(55, 80), ph: rnd(0, 6), wait: rnd(0, 1.5), mode: 'walk', bag: i % 2 ? 10 + i * 4 : 0, face: 1, shake: 0, shield: 0, seen: 0 }; });
   }
   function makeMotes() {
     motes = Array.from({ length: 34 }, () => ({ x: rnd(700, 900), y: rnd(80, 640), v: rnd(-8, 8), a: rnd(0, 6), r: rnd(0.8, 2.2) }));
@@ -121,10 +121,6 @@
     // เงา
     g.fillStyle = 'rgba(0,0,0,.5)'; g.beginPath(); g.ellipse(px, py, 22 * k, 6 * k, 0, 0, Math.PI * 2); g.fill();
     g.translate(px, py - bob); g.scale(th.face * k, k);
-    // ขา
-    const sw = th.moving ? Math.sin(th.ph) * 7 : 0;
-    g.fillStyle = '#2b3557';
-    rr(-11 + sw, -20, 9, 20, 4); g.fill(); rr(2 - sw, -20, 9, 20, 4); g.fill();
     // ถุงเพชรบนหลัง
     if (th.bag > 0) {
       const bs = Math.min(1.35, 0.85 + th.bag / 60);
@@ -133,19 +129,13 @@
       g.beginPath(); g.moveTo(-20, -50 * (0.9 + bs * 0.1)); g.lineTo(-14, -43); g.lineTo(-20, -36); g.lineTo(-26, -43); g.closePath(); g.fill();
       g.shadowBlur = 0;
     }
-    // ลำตัว เสื้อลายขวาง
-    g.fillStyle = th.col; rr(-15, -56, 30, 38, 10); g.fill();
-    g.fillStyle = 'rgba(10,13,24,.55)'; g.fillRect(-15, -45, 30, 5); g.fillRect(-15, -34, 30, 5);
-    // แขนแกว่ง
-    g.strokeStyle = th.col; g.lineWidth = 7; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(10, -48); g.lineTo(18 + (th.mode === 'dash' ? 8 : -sw * 0.6), -32); g.stroke();
-    // หัว + หมวกไหมพรม + หน้ากาก
-    g.fillStyle = '#e9bf96'; g.beginPath(); g.arc(0, -70, 15, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#3a4570'; g.beginPath(); g.arc(0, -72, 15.5, Math.PI, 0); g.fill(); g.fillRect(-15.5, -74, 31, 4);
-    g.beginPath(); g.arc(0, -88, 4.5, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#0a0d18'; rr(-15, -70, 30, 9, 4.5); g.fill();
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(-3, -65.5, 3, 0, Math.PI * 2); g.arc(8, -65.5, 3, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#0a0d18'; g.beginPath(); g.arc(-2, -65.5, 1.5, 0, Math.PI * 2); g.arc(9, -65.5, 1.5, 0, Math.PI * 2); g.fill();
+    // ตัวละครพิกเซล (js/sprites.js) สูงราว 94 หน่วยเท่าของเดิม
+    if (window.Spr) {
+      const u = 2.75, pose = th.moving ? 'walk' : 'idle';
+      const f = th.moving ? (Math.floor(th.ph / Math.PI) & 1) : (Math.floor(t * 1.6 + th.sp) & 1);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(Spr.frame(th.cls, pose, f), -12 * u, -34 * u, Spr.CW * u, Spr.CH * u);
+    }
     g.restore();
     // โล่ล็อก
     if (th.shield > 0) {
@@ -156,6 +146,7 @@
   }
 
   function drawLight() {
+    if (!isFinite(X(beam.x)) || !isFinite(beam.r * s) || !(beam.r * s > 0)) return;
     const sx = X(beam.x), sy = Y(beam.y), r = beam.r * s;
     g.save();
     g.globalCompositeOperation = 'lighter';
@@ -204,6 +195,7 @@
   }
 
   function draw() {
+    if (!(s > 0) || !W || !H) return;   // ขนาด 0 ตอนซ่อนแท็บ → กันค่า NaN
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, W, H);
     drawLight();
