@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ปล้นพิพิธภัณฑ์ — จอครู</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="pixel-ui.css">
 <style>
   body { overflow-x: hidden; }
   .topbar { display: flex; align-items: center; gap: 14px; padding: 14px 26px; border-bottom: 1px solid var(--line); background: rgba(11,16,34,.78); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
@@ -118,15 +119,61 @@
   @keyframes ciEm { 0% { transform: scale(.4) rotate(-14deg); } 18% { transform: scale(1.15) rotate(5deg); } 30% { transform: scale(1) rotate(0); } 100% { transform: scale(1.06); } }
   @keyframes ciStripes { to { background-position: 44px 0; } }
 </style>
+<style>
+  /* ===== ชุดกรอบพิกเซล (จอครูตอนเล่น) ===== */
+  .pxui .play { gap: 30px; padding: 30px 34px 26px; }
+  .pxui .news { gap: 26px; }
+  .pxui .breaking { padding: 4px; overflow: visible; }
+  .pxui .breaking .bar { margin: -4px -4px 0; padding: 12px 18px 14px; font: 800 1.25rem/1 var(--display); gap: 12px; }
+  .pxui .breaking .bar .en { color: #fff; opacity: .85; }
+  .pxui .breaking .head { padding: 22px 26px 26px; min-height: 186px; grid-template-columns: 124px 1fr; }
+  .pxui .breaking .ico { width: 124px; height: 124px; border-radius: 0; background:
+      radial-gradient(circle at 50% 42%, rgba(255,236,190,.28), rgba(255,236,190,0) 62%),
+      linear-gradient(180deg, #0c1130 0 78%, #2a3264 78% 82%, #1d2450 82%);
+    box-shadow: 0 -4px 0 var(--o), 0 4px 0 var(--o), -4px 0 0 var(--o), 4px 0 0 var(--o), inset 0 4px 0 rgba(255,255,255,.08); }
+  .pxui .breaking .ico .px { animation: bob 1.6s steps(4) infinite; filter: drop-shadow(0 0 12px rgba(127,230,250,.35)); }
+  @keyframes bob { 50% { transform: translateY(-6px); } }
+  .pxui .breaking h2 { text-shadow: 3px 3px 0 var(--o); }
+  .pxui .feed { padding: 10px 8px; }
+  .pxui .feed .it { border-bottom: 0; margin: 0 2px 8px; padding: 9px 14px; background: rgba(5,6,15,.35); box-shadow: inset 0 -3px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.05); grid-template-columns: 44px 1fr auto; }
+  .pxui .feed .it:first-child { background: rgba(244,180,0,.12); box-shadow: inset 4px 0 0 var(--gold), inset 0 -3px 0 rgba(0,0,0,.35); animation: slidein .35s steps(6) both; }
+  @keyframes slidein { from { transform: translateX(-30px); opacity: 0; } }
+  .pxui .feed .it .t { font: 400 .72rem/1 var(--pixel); }
+  .pxui .board { padding: 4px 14px 14px; }
+  .pxui .board .pp-head { margin: 0 -14px 14px; }
+  .pxui .lrow { border-radius: 0; height: 48px; left: 6px; right: 6px; overflow: hidden;
+    background: linear-gradient(180deg, #2f3a78, #222b5c 60%, #1a2150);
+    box-shadow: 0 -3px 0 var(--o), 0 3px 0 var(--o), -3px 0 0 var(--o), 3px 0 0 var(--o), inset 0 3px 0 rgba(255,255,255,.14), inset 0 -4px 0 rgba(0,0,0,.38); }
+  .pxui .lrow .rk { font: 700 1.1rem/1 var(--pixel); color: #c3cbe0; text-shadow: 2px 2px 0 var(--o); }
+  .pxui .lrow .d { font: 700 1.25rem/1 var(--pixel); text-shadow: 2px 2px 0 var(--o); }
+  .pxui .lrow .nm { text-shadow: 2px 2px 0 var(--o); }
+  .pxui .lrow.r1 { background: linear-gradient(180deg, #ffe48a, #f4b400 55%, #c98a00); box-shadow: 0 -3px 0 var(--o), 0 3px 0 var(--o), -3px 0 0 var(--o), 3px 0 0 var(--o), inset 0 3px 0 #fff6c4, inset 0 -4px 0 #8a5a00; }
+  .pxui .lrow.r2 { background: linear-gradient(180deg, #f4f6fb, #c3c9da 55%, #8e96ad); box-shadow: 0 -3px 0 var(--o), 0 3px 0 var(--o), -3px 0 0 var(--o), 3px 0 0 var(--o), inset 0 3px 0 #fff, inset 0 -4px 0 #5e6680; }
+  .pxui .lrow.r3 { background: linear-gradient(180deg, #ffc89a, #d8925a 55%, #9a5e30); box-shadow: 0 -3px 0 var(--o), 0 3px 0 var(--o), -3px 0 0 var(--o), 3px 0 0 var(--o), inset 0 3px 0 #ffe2c8, inset 0 -4px 0 #6a3a18; }
+  .pxui .lrow.r1 *, .pxui .lrow.r2 *, .pxui .lrow.r3 * { color: #1c1530 !important; text-shadow: 1px 1px 0 rgba(255,255,255,.45) !important; }
+  .pxui .lrow.r1::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.6) 50%, transparent 58%) no-repeat; background-size: 220% 100%; animation: shine 3.2s steps(20) infinite; }
+  @keyframes shine { from { background-position: 160% 0; } 60%, to { background-position: -60% 0; } }
+  .pxui .lrow.flash-up { box-shadow: 0 0 0 3px var(--ok), inset 0 0 0 200px rgba(61,220,151,.35) !important; }
+  .pxui .lrow.flash-down { box-shadow: 0 0 0 3px var(--alarm), inset 0 0 0 200px rgba(255,79,94,.35) !important; }
+  .pxui .stats-row { gap: 16px; margin-top: 16px; }
+  .pxui .stat { border-radius: 0; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 10px; text-align: left; padding: 10px 12px 12px;
+    background: linear-gradient(180deg, rgba(150,215,255,.10), rgba(150,215,255,.03)), #0c1130;
+    box-shadow: 0 -3px 0 var(--o), 0 3px 0 var(--o), -3px 0 0 var(--o), 3px 0 0 var(--o), inset 0 3px 0 rgba(159,220,255,.35), inset 3px 0 0 rgba(159,220,255,.12), inset 0 -4px 0 rgba(0,0,0,.4); }
+  .pxui .stat .px { grid-row: span 2; }
+  .pxui .stat b { font: 700 1.5rem/1 var(--pixel); text-shadow: 2px 2px 0 var(--o); }
+  .pxui .timer { border-radius: 0; background: #05060f; color: #ffd36b; font: 700 2.1rem/1 var(--pixel); padding: 10px 20px 8px; text-shadow: 0 0 10px rgba(244,180,0,.6), 3px 3px 0 #3a2c08;
+    box-shadow: 0 -4px 0 #3a4682, 0 4px 0 #1d2450, -4px 0 0 #2a3264, 4px 0 0 #2a3264, 0 -8px 0 var(--o), 0 8px 0 var(--o), -8px 0 0 var(--o), 8px 0 0 var(--o), -4px -4px 0 var(--o), 4px -4px 0 var(--o), -4px 4px 0 var(--o), 4px 4px 0 var(--o); }
+  .pxui .timer.hot { background: #2a0610; color: #ff6a78; text-shadow: 0 0 12px rgba(255,79,94,.8), 3px 3px 0 #3a0810; }
+</style>
 </head>
-<body>
+<body class="pxui">
 <canvas id="confetti"></canvas>
 <div id="alarmedge"></div>
 <div id="cutins"></div>
 
 <!-- ตั้งค่า -->
 <section class="view on" id="v-setup">
-  <div class="topbar"><a class="logo" href="index.html"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</a><span class="grow"></span><a class="btn btn-sm" href="bank.html">📚 คลังคำถาม</a><button class="btn btn-sm" id="btn-mute1">🔊</button></div>
+  <div class="topbar"><a class="logo" href="index.html"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</a><span class="grow"></span><a class="btn btn-sm" href="bank.html"><span data-spr="safe" data-px="20"></span> คลังคำถาม</a><button class="btn btn-sm" id="btn-mute1" data-spr="speaker" data-px="22"></button></div>
   <div class="wrap">
     <div class="hero"><span class="tag tag-gem">MUSEUM HEIST · เกมตอบคำถามทั้งห้อง</span><h1 style="margin-top:14px">ปล้นพิพิธภัณฑ์</h1><p>ตอบคำถามให้ถูกเพื่อเก็บเพชร แล้วงัดตู้เซฟเพื่อนเพื่อแย่งเพชรมาเป็นของเรา</p></div>
     <div class="setup">
@@ -140,11 +187,11 @@
       <div class="card">
         <h3 style="margin-bottom:14px">กติกาสั้น ๆ</h3>
         <ul class="rule-list">
-          <li><span class="n">💎</span><span>ตอบถูกได้เพชร 10 เม็ด ตอบเร็วและตอบถูกติดกันได้โบนัส</span></li>
-          <li><span class="n">🦹</span><span>ตอบถูกสะสมครบทุก 3 ข้อ หน้าปล้นเด้งขึ้นเอง เลือกเป้าใน 6 วินาที (ไม่เลือกระบบสุ่มให้)</span></li>
-          <li><span class="n">🔓</span><span>งัดสลัก 2 ตัวภายใน 5 วินาที ได้ 2 ตัวขโมย 25% ได้ 1 ตัวขโมย 12%</span></li>
-          <li><span class="n">⚡</span><span>ตอบถูกสะสมครบทุก 9 ข้อ สกิลอาชีพทำงานเอง และขึ้นภาพตัดฉากบนจอนี้</span></li>
-          <li><span class="n">🛡️</span><span>คนที่เพิ่งโดนปล้นมีโล่คุ้มกัน 25 วินาที</span></li>
+          <li><span class="n"><span data-spr="gem" data-px="30"></span></span><span>ตอบถูกได้เพชร 10 เม็ด ตอบเร็วและตอบถูกติดกันได้โบนัส</span></li>
+          <li><span class="n"><span data-spr="bag" data-px="30"></span></span><span>ตอบถูกสะสมครบทุก 3 ข้อ หน้าปล้นเด้งขึ้นเอง เลือกเป้าใน 6 วินาที (ไม่เลือกระบบสุ่มให้)</span></li>
+          <li><span class="n"><span data-spr="lock" data-px="30"></span></span><span>งัดสลัก 2 ตัวภายใน 5 วินาที ได้ 2 ตัวขโมย 25% ได้ 1 ตัวขโมย 12%</span></li>
+          <li><span class="n"><span data-spr="star" data-px="30"></span></span><span>ตอบถูกสะสมครบทุก 9 ข้อ สกิลอาชีพทำงานเอง และขึ้นภาพตัดฉากบนจอนี้</span></li>
+          <li><span class="n"><span data-spr="shield" data-px="30"></span></span><span>คนที่เพิ่งโดนปล้นมีโล่คุ้มกัน 25 วินาที</span></li>
         </ul>
         <div class="classes" id="s-classes"></div>
       </div>
@@ -154,13 +201,13 @@
 
 <!-- ล็อบบี้ -->
 <section class="view" id="v-lobby">
-  <div class="topbar"><span class="logo"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</span><span class="grow"></span><button class="btn btn-sm" id="btn-mute2">🔊</button><button class="btn btn-sm btn-ghost" id="btn-close1">ปิดห้อง</button></div>
+  <div class="topbar"><span class="logo"><svg class="gem" viewBox="0 0 64 64"><use href="#gem"/></svg>ปล้นพิพิธภัณฑ์</span><span class="grow"></span><button class="btn btn-sm" id="btn-mute2" data-spr="speaker" data-px="22"></button><button class="btn btn-sm btn-ghost" id="btn-close1">ปิดห้อง</button></div>
   <div class="wrap">
     <div class="lobby">
       <div class="card join-card">
         <span class="label">สแกนเพื่อเข้าร่วม</span>
         <div id="qr-box" style="margin-top:12px"></div>
-        <p id="l-local" hidden style="margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--alarm-soft);border:1px solid rgba(255,79,94,.45);font-size:.9rem;line-height:1.45">🧪 <b>โหมดทดลองในเครื่อง</b> มือถือสแกนเข้าไม่ได้ ให้เปิดลิงก์ด้านล่างในแท็บใหม่ของเบราว์เซอร์นี้แทน · ใช้มือถือจริงต้องเปิดจากเว็บที่อัปขึ้นแล้ว</p>
+        <p id="l-local" hidden style="margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--alarm-soft);border:1px solid rgba(255,79,94,.45);font-size:.9rem;line-height:1.45"><span data-spr="bulb" data-px="20"></span> <b>โหมดทดลองในเครื่อง</b> มือถือสแกนเข้าไม่ได้ ให้เปิดลิงก์ด้านล่างในแท็บใหม่ของเบราว์เซอร์นี้แทน · ใช้มือถือจริงต้องเปิดจากเว็บที่อัปขึ้นแล้ว</p>
         <div class="label" style="margin-top:16px">รหัสห้อง</div>
         <div class="code" id="l-code">------</div>
         <div class="url" id="l-url"></div>
@@ -182,18 +229,18 @@
     <span class="grow"></span>
     <div class="timer" id="hud-timer">0:00</div>
     <span class="grow"></span>
-    <button class="btn btn-sm" id="btn-mute3">🔊</button><button class="btn btn-sm" id="btn-fs">⛶</button><button class="btn btn-sm btn-ghost" id="btn-endnow">จบเกม</button>
+    <button class="btn btn-sm" id="btn-mute3" data-spr="speaker" data-px="22"></button><button class="btn btn-sm" id="btn-fs" data-spr="expand" data-px="20"></button><button class="btn btn-sm btn-ghost" id="btn-endnow">จบเกม</button>
   </div>
   <div class="play">
     <div class="news">
-      <div class="breaking"><div class="bar"><span class="live"></span>ข่าวด่วน<span class="grow"></span><span style="font-weight:600;font-size:.95rem;opacity:.9">สถานีข่าวพิพิธภัณฑ์</span></div>
-        <div class="head" id="brk"><div class="ico">🏛️</div><div><h2>พิพิธภัณฑ์เปิดทำการแล้ว!</h2><div class="sub">ตอบคำถามให้ถูกเพื่อเก็บเพชรเม็ดแรก</div></div></div></div>
-      <div class="feed" id="feed"></div>
+      <div class="breaking pp"><div class="bar pp-head alarm"><span class="livechip">LIVE</span>ข่าวด่วน<span class="en">BREAKING NEWS</span><span class="grow"></span><span style="font-weight:600;font-size:.95rem;opacity:.9">สถานีข่าวพิพิธภัณฑ์</span></div>
+        <div class="head" id="brk"><div class="ico" data-spr="museum" data-px="88"></div><div><h2>พิพิธภัณฑ์เปิดทำการแล้ว!</h2><div class="sub">ตอบคำถามให้ถูกเพื่อเก็บเพชรเม็ดแรก</div></div></div></div>
+      <div class="feed pp pp-glass" id="feed"></div>
     </div>
-    <div class="board">
-      <h3>🏆 จอมโจรอันดับต้น</h3>
+    <div class="board pp pp-gold">
+      <div class="pp-head gold"><span data-spr="trophy" data-px="40"></span><div><div class="en">Top thieves</div>จอมโจรอันดับต้น</div></div>
       <div class="rows" id="rows"></div>
-      <div class="stats-row"><div class="stat"><b id="st-stolen">0</b><span>เพชรถูกขโมยรวม</span></div><div class="stat"><b id="st-heists">0</b><span>ปล้นสำเร็จ</span></div><div class="stat"><b id="st-blocks">0</b><span>ตู้นิรภัยกันได้</span></div></div>
+      <div class="stats-row"><div class="stat"><span data-spr="gem" data-px="34"></span><b id="st-stolen">0</b><span>เพชรถูกขโมยรวม</span></div><div class="stat"><span data-spr="bag" data-px="34"></span><b id="st-heists">0</b><span>ปล้นสำเร็จ</span></div><div class="stat"><span data-spr="vault" data-px="34"></span><b id="st-blocks">0</b><span>ตู้นิรภัยกันได้</span></div></div>
     </div>
   </div>
 </section>
@@ -226,7 +273,11 @@
 <script src="js/config.js"></script>
 <script src="js/net.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/exam-sets.js"></script>
 <script src="js/bank.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/scene.js"></script>
+<script>Scene.mount({ dim: .25 }); document.querySelectorAll('[data-spr]').forEach(function (el) { el.innerHTML = Spr.img(el.dataset.spr, +(el.dataset.px || 30)); });</script>
 <script src="js/rules.js"></script>
 <script src="js/host.js"></script>
 </body>
