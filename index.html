@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0b1022">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="pixel-ui.css">
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Kanit:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -94,6 +95,7 @@
 
   .crew { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .cc { position: relative; border-radius: 18px; overflow: hidden; min-height: 196px; display: flex; flex-direction: column; justify-content: flex-end; }
+  #crewA .cc { min-height: 270px; } #crewA .cc .emo { top: 30px; transform: translateX(-50%); }
   .cc .cov { position: absolute; inset: 0; }
   .cc .cov::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.22) 1.4px, transparent 1.5px); background-size: 16px 16px; }
   .cc .emo { position: absolute; top: 18px; left: 50%; transform: translateX(-50%) rotate(-6deg); font-size: 3rem; filter: drop-shadow(0 8px 14px rgba(0,0,0,.35)); }
@@ -147,7 +149,7 @@
   @media (prefers-reduced-motion: reduce) { .start, .sheet { animation: none; } }
 </style>
 </head>
-<body>
+<body class="pxui home">
 
 <main class="stage" id="stage">
   <svg class="art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -238,11 +240,11 @@
     <p class="tagline">ตอบคำถามให้ถูก เก็บเพชรให้มาก แล้วงัดตู้เซฟของเพื่อนก่อนพิพิธภัณฑ์ปิด</p>
 
     <nav class="menu" aria-label="เมนูหลัก">
-      <button class="mbtn" type="button" data-open="how"><span class="ic">📜</span><b>วิธีเล่น</b><small>How to</small></button>
-      <button class="mbtn" type="button" data-open="crew"><span class="ic">🦹</span><b>ทีมโจร</b><small>The crew</small></button>
+      <button class="mbtn" type="button" data-open="how"><span class="ic" data-spr="bulb"></span><b>วิธีเล่น</b><small>How to</small></button>
+      <button class="mbtn" type="button" data-open="crew"><span class="ic" data-spr="hd:pick"></span><b>ทีมโจร</b><small>The crew</small></button>
       <button class="start" type="button" data-open="start">เริ่มภารกิจ<small>START HEIST</small></button>
-      <button class="mbtn" type="button" data-open="bank"><span class="ic">🗂️</span><b>คลังคำถาม</b><small>Questions</small></button>
-      <button class="mbtn" type="button" data-open="more"><span class="ic">🎮</span><b>เกมอื่น</b><small>More games</small></button>
+      <button class="mbtn" type="button" data-open="bank"><span class="ic" data-spr="safe"></span><b>คลังคำถาม</b><small>Questions</small></button>
+      <button class="mbtn" type="button" data-open="more"><span class="ic" data-spr="trophy"></span><b>เกมอื่น</b><small>More games</small></button>
     </nav>
   </section>
 </main>
@@ -259,12 +261,12 @@
       <p class="sub">ครูเปิดห้องบนจอโปรเจคเตอร์ก่อน แล้วนักเรียนสแกน QR หรือพิมพ์รหัสห้อง 6 หลัก</p>
       <div class="choices">
         <a class="choice teacher" id="goHost" href="host.html">
-          <span class="ic">🧑‍🏫</span><b>ครู: เปิดห้อง</b>
+          <span class="ic" data-spr="hd:plan" data-px="44"></span><b>ครู: เปิดห้อง</b>
           <p>เลือกชุดคำถาม ตั้งเวลา แล้วฉายจอนี้ขึ้นโปรเจคเตอร์ ระบบจะสร้างรหัสห้องกับ QR ให้</p>
           <span class="bigbtn gold" style="margin-top:4px">เปิดห้องเลย →</span>
         </a>
         <div class="choice">
-          <span class="ic">🎒</span><b>นักเรียน: เข้าห้อง</b>
+          <span class="ic" data-spr="hd:crack" data-px="44"></span><b>นักเรียน: เข้าห้อง</b>
           <p>พิมพ์รหัสห้องที่อยู่บนจอครู</p>
           <form class="codein" id="joinForm" autocomplete="off">
             <input id="roomCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="รหัส 6 หลัก" aria-label="รหัสห้อง 6 หลัก">
@@ -273,7 +275,7 @@
           <a href="play.html" id="goPlay" style="font-size:.88rem;color:var(--muted)">ไม่มีรหัส? เปิดหน้าเข้าห้อง</a>
         </div>
       </div>
-      <p class="local" id="localNote" hidden>🧪 เปิดจากเครื่องนี้ (localhost) จึงเข้า <b>โหมดทดลองในเครื่อง</b> อัตโนมัติ: เปิดจอครูหนึ่งแท็บ แล้วเปิดหน้านักเรียนอีกหลายแท็บในเบราว์เซอร์เดียวกัน</p>
+      <p class="local" id="localNote" hidden><span data-spr="bulb" data-px="18"></span> เปิดจากเครื่องนี้ (localhost) จึงเข้า <b>โหมดทดลองในเครื่อง</b> อัตโนมัติ: เปิดจอครูหนึ่งแท็บ แล้วเปิดหน้านักเรียนอีกหลายแท็บในเบราว์เซอร์เดียวกัน</p>
     </div>
 
     <!-- วิธีเล่น -->
@@ -282,13 +284,13 @@
       <h2>วิธีเล่น</h2>
       <p class="sub">ทั้งห้องเล่นพร้อมกัน แต่ละคนตอบคำถามบนมือถือตามจังหวะของตัวเอง เวลาหมด ใครถือเพชรมากที่สุดคือจอมโจรอันดับหนึ่ง</p>
       <div class="steps">
-        <div class="stepc"><span class="n">01 · ANSWER</span><h3>💎 ตอบถูก เก็บเพชร</h3><ul><li>ถูก 1 ข้อ ได้ 10 เพชร</li><li>ตอบเร็วได้เพิ่มสูงสุด +5</li><li>ถูกติดกันตั้งแต่ 3 ข้อ +5</li><li>ตอบผิดไม่เสียเพชร</li></ul></div>
-        <div class="stepc"><span class="n">02 · HEIST</span><h3>🦹 ครบ 3 ข้อ ปล้นเอง</h3><ul><li>ถูกสะสมครบทุก 3 ข้อ หน้าปล้นเด้งขึ้นมาเอง</li><li>เลือกตู้ใน 6 วินาที ไม่เลือกระบบสุ่มให้</li><li>แตะตอนเข็มอยู่ในโซนเขียว 2 ครั้งใน 5 วินาที</li><li>ได้ 2/2 ขโมย 25% · 1/2 ขโมย 12%</li></ul></div>
-        <div class="stepc"><span class="n">03 · SKILL</span><h3>⚡ ครบ 9 ข้อ ใช้สกิล</h3><ul><li>ถูกสะสมครบทุก 9 ข้อ สกิลอาชีพทำงานเอง</li><li>จอครูขึ้นภาพตัดฉากให้ทั้งห้องเห็น</li><li>เพิ่งโดนปล้น ได้โล่ 25 วินาที</li></ul></div>
+        <div class="stepc"><span class="n">01 · ANSWER</span><h3><span data-spr="gem" data-px="26"></span> ตอบถูก เก็บเพชร</h3><ul><li>ถูก 1 ข้อ ได้ 10 เพชร</li><li>ตอบเร็วได้เพิ่มสูงสุด +5</li><li>ถูกติดกันตั้งแต่ 3 ข้อ +5</li><li>ตอบผิดไม่เสียเพชร</li></ul></div>
+        <div class="stepc"><span class="n">02 · HEIST</span><h3><span data-spr="bag" data-px="26"></span> ครบ 3 ข้อ ปล้นเอง</h3><ul><li>ถูกสะสมครบทุก 3 ข้อ หน้าปล้นเด้งขึ้นมาเอง</li><li>เลือกตู้ใน 6 วินาที ไม่เลือกระบบสุ่มให้</li><li>แตะตอนเข็มอยู่ในโซนเขียว 2 ครั้งใน 5 วินาที</li><li>ได้ 2/2 ขโมย 25% · 1/2 ขโมย 12%</li></ul></div>
+        <div class="stepc"><span class="n">03 · SKILL</span><h3><span data-spr="star" data-px="26"></span> ครบ 9 ข้อ ใช้สกิล</h3><ul><li>ถูกสะสมครบทุก 9 ข้อ สกิลอาชีพทำงานเอง</li><li>จอครูขึ้นภาพตัดฉากให้ทั้งห้องเห็น</li><li>เพิ่งโดนปล้น ได้โล่ 25 วินาที</li></ul></div>
       </div>
       <div class="two">
-        <div class="note"><b>📽️ จอครู</b> ฉายข่าวด่วนการปล้น อันดับ 10 คนแรก และโพเดียมตอนจบ</div>
-        <div class="note"><b>📱 มือถือนักเรียน</b> แค่ตอบคำถาม การปล้นกับสกิลเด้งขึ้นมาเอง และเห็นอันดับ 1–3 กับอันดับตัวเอง</div>
+        <div class="note"><b><span data-spr="museum" data-px="20"></span> จอครู</b> ฉายข่าวด่วนการปล้น อันดับ 10 คนแรก และโพเดียมตอนจบ</div>
+        <div class="note"><b><span data-spr="hd:crack" data-px="20"></span> มือถือนักเรียน</b> แค่ตอบคำถาม การปล้นกับสกิลเด้งขึ้นมาเอง และเห็นอันดับ 1–3 กับอันดับตัวเอง</div>
       </div>
     </div>
 
@@ -309,9 +311,9 @@
       <h2>คลังคำถาม</h2>
       <p class="sub">เตรียมชุดคำถามไว้ก่อนเปิดห้อง แล้วเลือกชุดที่ต้องการตอนตั้งค่าบนจอครู คำถามเก็บไว้ในเบราว์เซอร์ของเครื่องที่ใช้สร้าง</p>
       <div class="list">
-        <a class="row" href="bank.html"><span class="ic">🗂️</span><div><b>เปิดคลังคำถาม</b><span>สร้างชุด เพิ่มหรือแก้ข้อ ข้อละ 4 ตัวเลือก</span></div><span class="go">→</span></a>
-        <div class="row"><span class="ic">🔀</span><div><b>ลำดับไม่ซ้ำกัน</b><span>นักเรียนแต่ละคนได้คำถามและตัวเลือกสลับลำดับ ลอกกันยาก</span></div></div>
-        <div class="row"><span class="ic">🎨</span><div><b>ใช้ร่วมกับเกมสงครามสี</b><span>เมื่อเปิดจากเว็บเดียวกัน ชุดคำถามที่ทำไว้ใช้ได้ทั้งสองเกม</span></div></div>
+        <a class="row" href="bank.html"><span class="ic" data-spr="safe" data-px="30"></span><div><b>เปิดคลังคำถาม</b><span>สร้างชุด เพิ่มหรือแก้ข้อ ข้อละ 4 ตัวเลือก</span></div><span class="go">→</span></a>
+        <div class="row"><span class="ic" data-spr="star" data-px="30"></span><div><b>ลำดับไม่ซ้ำกัน</b><span>นักเรียนแต่ละคนได้คำถามและตัวเลือกสลับลำดับ ลอกกันยาก</span></div></div>
+        <div class="row"><span class="ic" data-spr="gem" data-px="30"></span><div><b>ใช้ร่วมกับเกมสงครามสี</b><span>เมื่อเปิดจากเว็บเดียวกัน ชุดคำถามที่ทำไว้ใช้ได้ทั้งสองเกม</span></div></div>
       </div>
     </div>
 
@@ -321,16 +323,17 @@
       <h2>เกมอื่นของห้องเรียน</h2>
       <p class="sub">เกมที่เปิดให้เล่นแล้ว</p>
       <div class="list">
-        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-boss-game/"><span class="ic">⚔️</span><div><b>นักธรรมปราบกิเลส</b><span>ตอบคำถามธรรมะ โจมตีบอสกิเลส</span></div><span class="go">↗</span></a>
-        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-fishing-game/"><span class="ic">🎣</span><div><b>นักธรรมตกปลา</b><span>ตอบถูกแล้วตกปลา</span></div><span class="go">↗</span></a>
-        <a class="row" href="https://sirawatjan-svg.github.io/ayutthaya-night-game/"><span class="ic">🌙</span><div><b>ค่ำคืนว้าวุ่นในเมืองอยุธยา</b><span>เกมบทบาทลับทั้งห้อง</span></div><span class="go">↗</span></a>
-        <a class="row" href="https://sirawatjan-svg.github.io/quizjoy/"><span class="ic">🙋</span><div><b>Quizjoy</b><span>ตอบคำถามด้วยท่าทางหน้ากล้อง</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-boss-game/"><span class="ic" data-spr="shield" data-px="30"></span><div><b>นักธรรมปราบกิเลส</b><span>ตอบคำถามธรรมะ โจมตีบอสกิเลส</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/dhamma-fishing-game/"><span class="ic" data-spr="key" data-px="30"></span><div><b>นักธรรมตกปลา</b><span>ตอบถูกแล้วตกปลา</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/ayutthaya-night-game/"><span class="ic" data-spr="bulb" data-px="30"></span><div><b>ค่ำคืนว้าวุ่นในเมืองอยุธยา</b><span>เกมบทบาทลับทั้งห้อง</span></div><span class="go">↗</span></a>
+        <a class="row" href="https://sirawatjan-svg.github.io/quizjoy/"><span class="ic" data-spr="hand" data-px="30"></span><div><b>Quizjoy</b><span>ตอบคำถามด้วยท่าทางหน้ากล้อง</span></div><span class="go">↗</span></a>
       </div>
     </div>
   </div>
 </div>
 
 <script src="js/sfx.js"></script>
+<script src="js/sprites.js"></script>
 <script src="js/hero-anim.js"></script>
 <script>
 /* เพลงย่องเบา: เริ่มเมื่อแตะ/คลิกครั้งแรก (เบราว์เซอร์ห้ามเล่นเสียงเอง) */
@@ -396,9 +399,12 @@
     ['🧠', 'Sharp mind', 'นักคิดแม่นที่สุด', 'ตอบถูกมากที่สุด', 'linear-gradient(135deg,#ff9fc8,#d14a8b)'],
     ['🎈', 'Lucky target', 'ผู้ถูกปล้นมากที่สุด', 'รางวัลปลอบใจของคนที่ใคร ๆ ก็หมายตา', 'linear-gradient(135deg,#8fc8ff,#3a74d6)']
   ];
+  var CLS = { '🧤': 'pick', '🔐': 'crack', '🕵️': 'plan', '🛡️': 'guard' };
+  function icon(e) { return CLS[e] ? Spr.anim(CLS[e], 'idle', 60) : Spr.img(Spr.ic(e), 64); }
+  document.querySelectorAll('[data-spr]').forEach(function (el) { el.innerHTML = Spr.img(el.dataset.spr, +(el.dataset.px || 30)); });
   function card(c, tag) {
-    return '<article class="cc"><div class="cov" style="background:' + c[4] + '"></div><span class="tg">' + tag + '</span><span class="emo">' + c[0] + '</span>' +
-      '<div class="gl"><div class="t">' + c[1] + '</div><div class="th">' + c[2] + '</div><div class="d">' + c[3] + '</div></div></article>';
+    return '<article class="cc"><div class="cov" style="background:' + c[4] + '"></div><span class="tg">' + tag + '</span><span class="emo">' + icon(c[0]) + '</span>' +
+      '<div class="gl"><div class="t">' + c[1] + '</div><div class="th">' + c[2] + '</div><div class="d">' + c[3].replace(/👐|🗝️|📂|🏦/g, function (m) { return Spr.img(Spr.ic(m), 16); }) + '</div></div></article>';
   }
   document.getElementById('crewA').innerHTML = CREW.map(function (c) { return card(c, 'อาชีพ'); }).join('');
   document.getElementById('crewB').innerHTML = AWARDS.map(function (c) { return card(c, 'รางวัล'); }).join('');
