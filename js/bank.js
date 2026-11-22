@@ -14,6 +14,16 @@ const Bank = (() => {
     if (!d || !Array.isArray(d.sets)) d = { sets: [] };
     if (!d.sets.length) { d.sets.push(sampleSet()); save(d); }
     if (!d.sets.some(x => x.id === "pol-m2-u6")) { d.sets.push(politicsSet()); save(d); }
+    if (typeof EXAM_SETS !== 'undefined') {
+      // ชุดจากคลังข้อสอบ: เพิ่มครั้งเดียว ถ้าครูลบทิ้งจะไม่กลับมาอีก
+      d.seeded = d.seeded || []; let add = 0;
+      for (const x of EXAM_SETS) {
+        if (d.seeded.includes(x.id)) continue; d.seeded.push(x.id); add++;
+        if (d.sets.some(y => y.id === x.id)) continue;
+        d.sets.push({ id: x.id, name: x.name, subject: x.subject, createdAt: Date.now(), questions: x.questions.map(q => Object.assign({ id: uid() }, q)) });
+      }
+      if (add) save(d);
+    }
     return d;
   }
   function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
